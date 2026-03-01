@@ -9,6 +9,9 @@ const familySchema = new mongoose.Schema({
     },
     headName: String,
     nic: String,
+    headDateOfBirth: {
+        type: Date
+    },
     phone: String,
     whatsapp: String,
     email: String,

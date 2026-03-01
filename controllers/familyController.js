@@ -144,6 +144,7 @@ exports.createFamily = async (req, res) => {
 
         const family = await Family.create({
             ...rest,
+            headDateOfBirth: rest.headDateOfBirth || null,
             headDisabilityDetails: headDisability
                 ? finalHeadDisability
                 : ""
