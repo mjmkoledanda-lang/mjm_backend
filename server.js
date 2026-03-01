@@ -14,12 +14,21 @@ const app = express();
 // ===============================
 
 app.use(cors({
-    origin: [
-        "http://localhost:3000",
-        "https://mjmkw.vercel.app"
-    ],
+    origin: (origin, callback) => {
+        if (
+            !origin ||
+            origin.includes("vercel.app") ||
+            origin.includes("localhost")
+        ) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
     credentials: true
 }));
+
+app.options("*", cors());
 
 app.use(express.json());
 app.use(cookieParser());
