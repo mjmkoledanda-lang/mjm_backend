@@ -82,10 +82,6 @@ app.use("/api/families", require("./routes/familyRoutes"));
 app.use(helmet());
 app.use(cookieParser());
 
-app.use(cors({
-    origin: "http://localhost:3000",
-    credentials: true
-}));
 
 // app.use(rateLimit({
 //     windowMs: 15 * 60 * 1000,
