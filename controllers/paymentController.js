@@ -140,7 +140,7 @@ exports.getPaymentSummary = async (req, res) => {
         }).sort({ paidDate: -1 });
 
         // 🔥 SYSTEM START DATE
-        const START_YEAR = 2022;
+        const START_YEAR = 2020;
         const START_MONTH = 1;
 
         const now = new Date();

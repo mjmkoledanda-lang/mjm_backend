@@ -37,7 +37,18 @@ const familySchema = new mongoose.Schema({
     headOccupation: String,
     headEducationLevel: String,
     headMaritalStatus: String,
-    headDisabilityDetails: String,
+    headDisability: {
+        type: Boolean,
+        default: false
+    },
+    headDisabilityType: {
+        type: String,
+        default: ""
+    },
+    headDisabilityDetails: {
+        type: String,
+        default: ""
+    },
 
     houseType: String,
     familyType: String,
