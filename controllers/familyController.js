@@ -55,9 +55,6 @@ exports.getAllFamilies = async (req, res) => {
 
                 const members = await Member.find({ family: family._id });
 
-                // Count members
-                const memberCount = members.length;
-
                 // Count male/female from members
                 let maleCount = members.filter(
                     m => m.gender && m.gender.toUpperCase() === "MALE"
@@ -67,7 +64,7 @@ exports.getAllFamilies = async (req, res) => {
                     m => m.gender && m.gender.toUpperCase() === "FEMALE"
                 ).length;
 
-                // 🔥 Add head gender properly
+                // Include head gender
                 if (family.headGender?.toUpperCase() === "MALE") {
                     maleCount += 1;
                 }
@@ -76,9 +73,12 @@ exports.getAllFamilies = async (req, res) => {
                     femaleCount += 1;
                 }
 
+                // 🔥 Total = male + female
+                const totalMembers = maleCount + femaleCount;
+
                 return {
                     ...family.toObject(),
-                    totalMembers: memberCount + 1, // +1 for head
+                    totalMembers,
                     maleCount,
                     femaleCount
                 };
@@ -91,7 +91,6 @@ exports.getAllFamilies = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-
 exports.searchFamilies = async (req, res) => {
     try {
         const keyword = req.params.keyword;
