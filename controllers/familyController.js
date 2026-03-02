@@ -55,15 +55,26 @@ exports.getAllFamilies = async (req, res) => {
 
                 const members = await Member.find({ family: family._id });
 
+                // Count members
                 const memberCount = members.length;
 
-                const maleCount = members.filter(
+                // Count male/female from members
+                let maleCount = members.filter(
                     m => m.gender && m.gender.toUpperCase() === "MALE"
                 ).length;
 
-                const femaleCount = members.filter(
+                let femaleCount = members.filter(
                     m => m.gender && m.gender.toUpperCase() === "FEMALE"
                 ).length;
+
+                // 🔥 Add head gender properly
+                if (family.headGender?.toUpperCase() === "MALE") {
+                    maleCount += 1;
+                }
+
+                if (family.headGender?.toUpperCase() === "FEMALE") {
+                    femaleCount += 1;
+                }
 
                 return {
                     ...family.toObject(),
