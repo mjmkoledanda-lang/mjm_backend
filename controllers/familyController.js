@@ -49,14 +49,28 @@ exports.getFamilyById = async (req, res) => {
 exports.getAllFamilies = async (req, res) => {
     try {
         const families = await Family.find().sort({ familyId: 1 });
-        res.json(families);
+
+        const familiesWithCount = await Promise.all(
+            families.map(async (family) => {
+                const memberCount = await Member.countDocuments({
+                    family: family._id
+                });
+
+                return {
+                    ...family.toObject(),
+                    totalMembers: memberCount + 1   // +1 for head
+                };
+            })
+        );
+
+        res.json(familiesWithCount);
+
     } catch (error) {
         res.status(500).json({
             message: error.message
         });
     }
 };
-
 
 
 exports.searchFamilies = async (req, res) => {
