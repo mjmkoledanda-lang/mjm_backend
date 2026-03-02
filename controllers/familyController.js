@@ -136,7 +136,7 @@ exports.createFamily = async (req, res) => {
         } = req.body;
 
         const finalHeadDisability =
-            headDisabilityType === "Other"
+            headDisabilityType === "OTHER"
                 ? headDisabilityDetails
                 : headDisabilityType;
 
