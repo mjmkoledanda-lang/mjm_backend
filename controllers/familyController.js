@@ -125,8 +125,6 @@ exports.updateFamily = async (req, res) => {
     }
 };
 
-
-
 exports.createFamily = async (req, res) => {
     try {
 
@@ -145,6 +143,10 @@ exports.createFamily = async (req, res) => {
         const family = await Family.create({
             ...rest,
             headDateOfBirth: rest.headDateOfBirth || null,
+
+            // ✅ ADD THIS
+            headDisability: headDisability || false,
+
             headDisabilityDetails: headDisability
                 ? finalHeadDisability
                 : ""
