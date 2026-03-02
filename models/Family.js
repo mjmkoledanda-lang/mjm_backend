@@ -8,6 +8,12 @@ const familySchema = new mongoose.Schema({
         trim: true
     },
     headName: String,
+    headGender: {
+        type: String,
+        enum: ["MALE", "FEMALE"],
+        uppercase: true,
+        trim: true
+    },
     nic: String,
     headDateOfBirth: {
         type: Date
