@@ -50,28 +50,36 @@ exports.getAllFamilies = async (req, res) => {
     try {
         const families = await Family.find().sort({ familyId: 1 });
 
-        const familiesWithCount = await Promise.all(
+        const familiesWithStats = await Promise.all(
             families.map(async (family) => {
-                const memberCount = await Member.countDocuments({
-                    family: family._id
-                });
+
+                const members = await Member.find({ family: family._id });
+
+                const memberCount = members.length;
+
+                const maleCount = members.filter(
+                    m => m.gender && m.gender.toUpperCase() === "MALE"
+                ).length;
+
+                const femaleCount = members.filter(
+                    m => m.gender && m.gender.toUpperCase() === "FEMALE"
+                ).length;
 
                 return {
                     ...family.toObject(),
-                    totalMembers: memberCount + 1   // +1 for head
+                    totalMembers: memberCount + 1, // +1 for head
+                    maleCount,
+                    femaleCount
                 };
             })
         );
 
-        res.json(familiesWithCount);
+        res.json(familiesWithStats);
 
     } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
+        res.status(500).json({ message: error.message });
     }
 };
-
 
 exports.searchFamilies = async (req, res) => {
     try {
