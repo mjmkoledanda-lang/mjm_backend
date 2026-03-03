@@ -1,5 +1,6 @@
 exports.filterFamilies = async (req, res) => {
     try {
+
         const {
             gender,
             occupation,
@@ -40,11 +41,11 @@ exports.filterFamilies = async (req, res) => {
         heads.forEach(f => {
             results.push({
                 type: "HEAD",
-                name: f.headName,
-                gender: f.headGender,
-                familyId: f.familyId,
-                occupation: f.headOccupation,
-                disability: f.headDisabilityDetails
+                name: f.headName || "",
+                gender: f.headGender || "",
+                familyId: f.familyId || "",
+                occupation: f.headOccupation || "",
+                disability: f.headDisabilityDetails || ""
             });
         });
 
@@ -69,17 +70,18 @@ exports.filterFamilies = async (req, res) => {
         members.forEach(m => {
             results.push({
                 type: "MEMBER",
-                name: m.name,
-                gender: m.gender,
-                familyId: m.family?.familyId,
-                occupation: m.occupation,
-                disability: m.disabilityDetails
+                name: m.name || "",
+                gender: m.gender || "",
+                familyId: m.family ? m.family.familyId : "",
+                occupation: m.occupation || "",
+                disability: m.disabilityDetails || ""
             });
         });
 
         res.json(results);
 
     } catch (err) {
+        console.log("FILTER ERROR:", err);   // 🔥 show real error
         res.status(500).json({ message: err.message });
     }
 };
