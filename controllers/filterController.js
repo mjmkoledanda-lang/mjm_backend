@@ -1,3 +1,7 @@
+const Family = require("../models/Family");
+const Member = require("../models/Member");   // 🔥 THIS IS REQUIRED
+
+
 exports.filterFamilies = async (req, res) => {
     try {
 

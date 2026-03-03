@@ -31,7 +31,7 @@ router.get("/search/:keyword", protect, searchFamilies);
 // 🔥 VERY IMPORTANT — PLACE THIS BEFORE /:id
 router.get("/last", protect, getLastFamily);
 
-router.post("/filter", filterFamilies);
+
 
 // ✅ GET SINGLE
 router.get("/:id", protect, getFamilyById);
