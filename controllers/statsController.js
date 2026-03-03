@@ -1,16 +1,13 @@
 const Family = require("../models/Family");
 const Member = require("../models/Member");
 
+// ================= FULL STATS =================
 exports.getFullStats = async (req, res) => {
     try {
 
-        // Get all heads
         const heads = await Family.find();
-
-        // Get all members
         const members = await Member.find();
 
-        // Combine into single array
         const people = [];
 
         heads.forEach(h => {
@@ -57,6 +54,38 @@ exports.getFullStats = async (req, res) => {
 
     } catch (err) {
         console.log("STATS ERROR:", err);
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// ================= HEAD ONLY STATS =================
+exports.getHeadStats = async (req, res) => {
+    try {
+
+        const total = await Family.countDocuments();
+
+        const groupByField = async (field) => {
+            return await Family.aggregate([
+                {
+                    $group: {
+                        _id: `$${field}`,
+                        count: { $sum: 1 }
+                    }
+                }
+            ]);
+        };
+
+        res.json({
+            total,
+            gender: await groupByField("headGender"),
+            occupation: await groupByField("headOccupation"),
+            education: await groupByField("headEducationLevel"),
+            marital: await groupByField("headMaritalStatus"),
+            disability: await groupByField("headDisabilityDetails")
+        });
+
+    } catch (err) {
+        console.log("HEAD STATS ERROR:", err);
         res.status(500).json({ message: err.message });
     }
 };
