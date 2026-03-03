@@ -14,7 +14,9 @@ exports.filterFamilies = async (req, res) => {
             landOwnership,
             disasterStatus,
             program,
-            disability
+            disability,
+            widow,
+            converted
         } = filters;
 
         let results = [];
@@ -38,6 +40,14 @@ exports.filterFamilies = async (req, res) => {
             };
         }
 
+        if (widow !== undefined && widow !== "") {
+            headQuery.widow = widow === "true";
+        }
+
+        if (converted !== undefined && converted !== "") {
+            headQuery.converted = converted === "true";
+        }
+
         // =========================
         // BUILD MEMBER QUERY
         // =========================
@@ -55,7 +65,7 @@ exports.filterFamilies = async (req, res) => {
         }
 
         // =========================
-        // GENDER LOGIC (FIXED)
+        // GENDER LOGIC
         // =========================
         if (gender === "MALE") {
             headQuery.headGender = { $regex: "^male$", $options: "i" };
@@ -78,10 +88,29 @@ exports.filterFamilies = async (req, res) => {
         }
 
         // =========================
-        // EXECUTE QUERIES
+        // EXECUTE HEAD QUERY
         // =========================
         const heads = await Family.find(headQuery);
-        const members = await Member.find(memberQuery).populate("family");
+
+        // =========================
+        // EXECUTE MEMBER QUERY
+        // Apply family widow/converted filter inside populate
+        // =========================
+        const members = await Member.find(memberQuery)
+            .populate({
+                path: "family",
+                match: {
+                    ...(widow !== undefined && widow !== ""
+                        ? { widow: widow === "true" }
+                        : {}),
+                    ...(converted !== undefined && converted !== ""
+                        ? { converted: converted === "true" }
+                        : {})
+                }
+            });
+
+        // Remove members with null family (filtered out)
+        const filteredMembers = members.filter(m => m.family !== null);
 
         // =========================
         // PUSH HEAD RESULTS
@@ -100,12 +129,12 @@ exports.filterFamilies = async (req, res) => {
         // =========================
         // PUSH MEMBER RESULTS
         // =========================
-        members.forEach(m => {
+        filteredMembers.forEach(m => {
             results.push({
                 type: "MEMBER",
                 name: m.name || "",
                 gender: m.gender || "",
-                familyId: m.family ? m.family.familyId : "",
+                familyId: m.family.familyId || "",
                 occupation: m.occupation || "",
                 disability: m.disabilityDetails || ""
             });
