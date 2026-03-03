@@ -4,6 +4,7 @@ const router = express.Router();
 const { protect } = require("../middleware/authMiddleware");
 const { authorizeRoles } = require("../middleware/roleMiddleware");
 const { filterFamilies } = require("../controllers/filterController");
+const { getFullStats } = require("../controllers/statsController");
 const {
     createFamily,
     getFamilyById,
@@ -30,7 +31,7 @@ router.get("/search/:keyword", protect, searchFamilies);
 
 router.post("/filter", filterFamilies);
 const { getHeadStats } = require("../controllers/statsController");
-
+router.get("/stats/full", protect, getFullStats);
 router.get("/stats/head", protect, getHeadStats);
 
 // 🔥 VERY IMPORTANT — PLACE THIS BEFORE /:id

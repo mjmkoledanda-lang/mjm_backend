@@ -1,34 +1,58 @@
 const Family = require("../models/Family");
+const Member = require("../models/Member");
 
-exports.getHeadStats = async (req, res) => {
+exports.getFullStats = async (req, res) => {
     try {
 
-        const total = await Family.countDocuments();
+        // Get all heads
+        const heads = await Family.find();
 
-        const groupByField = async (field) => {
-            return await Family.aggregate([
-                {
-                    $group: {
-                        _id: `$${field}`,
-                        count: { $sum: 1 }
-                    }
-                }
-            ]);
+        // Get all members
+        const members = await Member.find();
+
+        // Combine into single array
+        const people = [];
+
+        heads.forEach(h => {
+            people.push({
+                gender: h.headGender,
+                occupation: h.headOccupation,
+                education: h.headEducationLevel,
+                marital: h.headMaritalStatus,
+                disability: h.headDisabilityDetails
+            });
+        });
+
+        members.forEach(m => {
+            people.push({
+                gender: m.gender,
+                occupation: m.occupation,
+                education: m.educationLevel,
+                marital: m.maritalStatus,
+                disability: m.disabilityDetails
+            });
+        });
+
+        const groupBy = (field) => {
+            const map = {};
+            people.forEach(p => {
+                const key = p[field] || "N/A";
+                map[key] = (map[key] || 0) + 1;
+            });
+
+            return Object.keys(map).map(k => ({
+                _id: k,
+                count: map[k]
+            }));
         };
 
-        const gender = await groupByField("headGender");
-        const occupation = await groupByField("headOccupation");
-        const education = await groupByField("headEducationLevel");
-        const marital = await groupByField("headMaritalStatus");
-        const disability = await groupByField("headDisabilityDetails");
-
         res.json({
-            total,
-            gender,
-            occupation,
-            education,
-            marital,
-            disability
+            totalPeople: people.length,
+            gender: groupBy("gender"),
+            occupation: groupBy("occupation"),
+            education: groupBy("education"),
+            marital: groupBy("marital"),
+            disability: groupBy("disability")
         });
 
     } catch (err) {
