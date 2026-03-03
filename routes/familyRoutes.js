@@ -3,7 +3,7 @@ const router = express.Router();
 
 const { protect } = require("../middleware/authMiddleware");
 const { authorizeRoles } = require("../middleware/roleMiddleware");
-
+const { filterFamilies } = require("../controllers/filterController");
 const {
     createFamily,
     getFamilyById,
@@ -44,5 +44,7 @@ router.delete(
     authorizeRoles("superadmin"),
     deleteFamily
 );
+
+router.post("/filter", filterFamilies);
 
 module.exports = router;
