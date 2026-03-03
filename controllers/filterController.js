@@ -1,10 +1,10 @@
 const Family = require("../models/Family");
-const Member = require("../models/Member");   // 🔥 THIS IS REQUIRED
-
+const Member = require("../models/Member");
 
 exports.filterFamilies = async (req, res) => {
     try {
 
+        const filters = req.body || {};
         const {
             gender,
             occupation,
@@ -15,21 +15,19 @@ exports.filterFamilies = async (req, res) => {
             disasterStatus,
             program,
             disability
-        } = req.body;
+        } = filters;
 
         let results = [];
 
-        // ================= HEAD FILTER =================
+        // =========================
+        // BUILD HEAD QUERY
+        // =========================
         let headQuery = {};
 
         if (gsDivision) headQuery.gsDivision = gsDivision;
         if (houseType) headQuery.houseType = houseType;
         if (landOwnership) headQuery.landOwnership = landOwnership;
         if (disasterStatus) headQuery.disasterStatus = disasterStatus;
-
-        if (gender === "HEAD_MALE") headQuery.headGender = "MALE";
-        if (gender === "HEAD_FEMALE") headQuery.headGender = "FEMALE";
-
         if (occupation) headQuery.headOccupation = occupation;
         if (educationLevel) headQuery.headEducationLevel = educationLevel;
 
@@ -40,24 +38,11 @@ exports.filterFamilies = async (req, res) => {
             };
         }
 
-        const heads = await Family.find(headQuery);
-
-        heads.forEach(f => {
-            results.push({
-                type: "HEAD",
-                name: f.headName || "",
-                gender: f.headGender || "",
-                familyId: f.familyId || "",
-                occupation: f.headOccupation || "",
-                disability: f.headDisabilityDetails || ""
-            });
-        });
-
-        // ================= MEMBER FILTER =================
+        // =========================
+        // BUILD MEMBER QUERY
+        // =========================
         let memberQuery = {};
 
-        if (gender === "MALE") memberQuery.gender = "MALE";
-        if (gender === "FEMALE") memberQuery.gender = "FEMALE";
         if (occupation) memberQuery.occupation = occupation;
         if (educationLevel) memberQuery.educationLevel = educationLevel;
         if (program) memberQuery.programs = program;
@@ -69,8 +54,52 @@ exports.filterFamilies = async (req, res) => {
             };
         }
 
+        // =========================
+        // GENDER LOGIC (FIXED)
+        // =========================
+        if (gender === "MALE") {
+            headQuery.headGender = { $regex: "^male$", $options: "i" };
+            memberQuery.gender = { $regex: "^male$", $options: "i" };
+        }
+
+        else if (gender === "FEMALE") {
+            headQuery.headGender = { $regex: "^female$", $options: "i" };
+            memberQuery.gender = { $regex: "^female$", $options: "i" };
+        }
+
+        else if (gender === "HEAD_MALE") {
+            headQuery.headGender = { $regex: "^male$", $options: "i" };
+            memberQuery._id = null; // block members
+        }
+
+        else if (gender === "HEAD_FEMALE") {
+            headQuery.headGender = { $regex: "^female$", $options: "i" };
+            memberQuery._id = null; // block members
+        }
+
+        // =========================
+        // EXECUTE QUERIES
+        // =========================
+        const heads = await Family.find(headQuery);
         const members = await Member.find(memberQuery).populate("family");
 
+        // =========================
+        // PUSH HEAD RESULTS
+        // =========================
+        heads.forEach(f => {
+            results.push({
+                type: "HEAD",
+                name: f.headName || "",
+                gender: f.headGender || "",
+                familyId: f.familyId || "",
+                occupation: f.headOccupation || "",
+                disability: f.headDisabilityDetails || ""
+            });
+        });
+
+        // =========================
+        // PUSH MEMBER RESULTS
+        // =========================
         members.forEach(m => {
             results.push({
                 type: "MEMBER",
@@ -85,7 +114,7 @@ exports.filterFamilies = async (req, res) => {
         res.json(results);
 
     } catch (err) {
-        console.log("FILTER ERROR:", err);   // 🔥 show real error
+        console.log("FILTER ERROR:", err);
         res.status(500).json({ message: err.message });
     }
 };
