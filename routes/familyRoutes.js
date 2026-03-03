@@ -28,6 +28,8 @@ router.get("/", protect, getAllFamilies);
 // ✅ SEARCH
 router.get("/search/:keyword", protect, searchFamilies);
 
+router.post("/filter", filterFamilies);
+
 // 🔥 VERY IMPORTANT — PLACE THIS BEFORE /:id
 router.get("/last", protect, getLastFamily);
 
