@@ -29,6 +29,9 @@ router.get("/", protect, getAllFamilies);
 router.get("/search/:keyword", protect, searchFamilies);
 
 router.post("/filter", filterFamilies);
+const { getHeadStats } = require("../controllers/statsController");
+
+router.get("/stats/head", protect, getHeadStats);
 
 // 🔥 VERY IMPORTANT — PLACE THIS BEFORE /:id
 router.get("/last", protect, getLastFamily);
