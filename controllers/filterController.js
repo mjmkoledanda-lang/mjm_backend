@@ -1,7 +1,3 @@
-// controllers/filterController.js
-const Family = require("../models/Family");
-const Member = require("../models/Member");
-
 exports.filterFamilies = async (req, res) => {
     try {
         const {
@@ -16,28 +12,49 @@ exports.filterFamilies = async (req, res) => {
             disability
         } = req.body;
 
-        let familyQuery = {};
+        let results = [];
+
+        // ================= HEAD FILTER =================
+        let headQuery = {};
+
+        if (gsDivision) headQuery.gsDivision = gsDivision;
+        if (houseType) headQuery.houseType = houseType;
+        if (landOwnership) headQuery.landOwnership = landOwnership;
+        if (disasterStatus) headQuery.disasterStatus = disasterStatus;
+
+        if (gender === "HEAD_MALE") headQuery.headGender = "MALE";
+        if (gender === "HEAD_FEMALE") headQuery.headGender = "FEMALE";
+
+        if (occupation) headQuery.headOccupation = occupation;
+        if (educationLevel) headQuery.headEducationLevel = educationLevel;
+
+        if (disability) {
+            headQuery.headDisabilityDetails = {
+                $regex: disability,
+                $options: "i"
+            };
+        }
+
+        const heads = await Family.find(headQuery);
+
+        heads.forEach(f => {
+            results.push({
+                type: "HEAD",
+                name: f.headName,
+                gender: f.headGender,
+                familyId: f.familyId,
+                occupation: f.headOccupation,
+                disability: f.headDisabilityDetails
+            });
+        });
+
+        // ================= MEMBER FILTER =================
         let memberQuery = {};
 
-        // ===== FAMILY LEVEL FILTERS =====
-        if (gsDivision) familyQuery.gsDivision = gsDivision;
-        if (houseType) familyQuery.houseType = houseType;
-        if (landOwnership) familyQuery.landOwnership = landOwnership;
-        if (disasterStatus) familyQuery.disasterStatus = disasterStatus;
-
-        // ===== HEAD GENDER FILTER =====
-        if (gender === "HEAD_MALE") familyQuery.headGender = "MALE";
-        if (gender === "HEAD_FEMALE") familyQuery.headGender = "FEMALE";
-
-        const families = await Family.find(familyQuery);
-
-        // ===== MEMBER FILTERS =====
         if (gender === "MALE") memberQuery.gender = "MALE";
         if (gender === "FEMALE") memberQuery.gender = "FEMALE";
-
         if (occupation) memberQuery.occupation = occupation;
         if (educationLevel) memberQuery.educationLevel = educationLevel;
-
         if (program) memberQuery.programs = program;
 
         if (disability) {
@@ -47,16 +64,20 @@ exports.filterFamilies = async (req, res) => {
             };
         }
 
-        const members = await Member.find(memberQuery)
-            .populate("family");
+        const members = await Member.find(memberQuery).populate("family");
 
-        // Combine head + members
-        const result = {
-            families,
-            members
-        };
+        members.forEach(m => {
+            results.push({
+                type: "MEMBER",
+                name: m.name,
+                gender: m.gender,
+                familyId: m.family?.familyId,
+                occupation: m.occupation,
+                disability: m.disabilityDetails
+            });
+        });
 
-        res.json(result);
+        res.json(results);
 
     } catch (err) {
         res.status(500).json({ message: err.message });
