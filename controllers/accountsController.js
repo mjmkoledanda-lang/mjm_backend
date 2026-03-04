@@ -54,23 +54,22 @@ exports.getAccounts = async (req, res) => {
     incomes.forEach(i => {
 
         transactions.push({
+            id: i._id,
             date: i.date,
             type: "income",
             description: i.description,
-            remarks: "",
             amount: i.amount
         });
-
     });
 
     // EXPENSES
     expenses.forEach(e => {
 
         transactions.push({
+            id: e._id,
             date: e.date,
             type: "expense",
             description: e.description,
-            remarks: "",
             amount: e.amount
         });
 
