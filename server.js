@@ -41,6 +41,8 @@ app.use("/api/members", require("./routes/memberRoutes"));
 app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/accounts", accountsRoutes);
+app.use("/api/income", require("./routes/incomeRoutes"));
+app.use("/api/expense", require("./routes/expenseRoutes"));
 
 // ===============================
 // START SERVER (LAST LINE ONLY)
