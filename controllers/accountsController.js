@@ -8,8 +8,9 @@ exports.getAccounts = async (req, res) => {
 
         const { year, month } = req.params;
 
-        const start = new Date(year, month - 1, 1);
-        const end = new Date(year, month, 1);
+        // Use UTC safe date range
+        const start = new Date(Date.UTC(year, month - 1, 1));
+        const end = new Date(Date.UTC(year, month, 1));
 
         const payments = await Payment.find({
             paidDate: { $gte: start, $lt: end }
@@ -33,14 +34,9 @@ exports.getAccounts = async (req, res) => {
 
         payments.forEach(p => {
 
-            const d = new Date(p.paidDate);
-
-            const date =
-                d.getFullYear() +
-                "-" +
-                String(d.getMonth() + 1).padStart(2, "0") +
-                "-" +
-                String(d.getDate()).padStart(2, "0");
+            const date = new Date(p.paidDate).toLocaleDateString("en-CA", {
+                timeZone: "Asia/Colombo"
+            });
 
             if (!paymentMap[date]) {
                 paymentMap[date] = 0;
@@ -53,7 +49,7 @@ exports.getAccounts = async (req, res) => {
         Object.keys(paymentMap).forEach(date => {
 
             transactions.push({
-                date: date,
+                date,
                 type: "payment",
                 description: "Monthly Payment",
                 remarks: "",
@@ -68,18 +64,13 @@ exports.getAccounts = async (req, res) => {
 
         incomes.forEach(i => {
 
-            const d = new Date(i.date);
-
-            const date =
-                d.getFullYear() +
-                "-" +
-                String(d.getMonth() + 1).padStart(2, "0") +
-                "-" +
-                String(d.getDate()).padStart(2, "0");
+            const date = new Date(i.date).toLocaleDateString("en-CA", {
+                timeZone: "Asia/Colombo"
+            });
 
             transactions.push({
                 _id: i._id,
-                date: date,
+                date,
                 type: "income",
                 description: i.description,
                 remarks: "",
@@ -94,18 +85,13 @@ exports.getAccounts = async (req, res) => {
 
         expenses.forEach(e => {
 
-            const d = new Date(e.date);
-
-            const date =
-                d.getFullYear() +
-                "-" +
-                String(d.getMonth() + 1).padStart(2, "0") +
-                "-" +
-                String(d.getDate()).padStart(2, "0");
+            const date = new Date(e.date).toLocaleDateString("en-CA", {
+                timeZone: "Asia/Colombo"
+            });
 
             transactions.push({
                 _id: e._id,
-                date: date,
+                date,
                 type: "expense",
                 description: e.description,
                 remarks: "",
