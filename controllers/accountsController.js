@@ -33,7 +33,6 @@ exports.getAccounts = async (req, res) => {
 
         payments.forEach(p => {
 
-            // LOCAL DATE (Sri Lanka safe)
             const d = new Date(p.paidDate);
 
             const date =
