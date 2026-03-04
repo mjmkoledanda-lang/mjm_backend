@@ -40,7 +40,7 @@ app.use("/api/families", require("./routes/familyRoutes"));
 app.use("/api/members", require("./routes/memberRoutes"));
 app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
-app.use("/accounts", accountsRoutes);
+app.use("/api/accounts", accountsRoutes);
 
 // ===============================
 // START SERVER (LAST LINE ONLY)
