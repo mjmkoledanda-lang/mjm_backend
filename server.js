@@ -4,6 +4,7 @@ const cors = require("cors");
 const connectDB = require("./config/db");
 const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
+const accountsRoutes = require("./routes/accountsRoutes");
 
 connectDB();
 
@@ -39,6 +40,7 @@ app.use("/api/families", require("./routes/familyRoutes"));
 app.use("/api/members", require("./routes/memberRoutes"));
 app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
+app.use("/accounts", accountsRoutes);
 
 // ===============================
 // START SERVER (LAST LINE ONLY)

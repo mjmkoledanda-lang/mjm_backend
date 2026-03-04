@@ -9,6 +9,7 @@ const paymentSchema = new mongoose.Schema({
     year: Number,
     month: Number,
     amount: Number,
+    remarks: String,   // ADD THIS
     paidDate: {
         type: Date,
         default: Date.now
