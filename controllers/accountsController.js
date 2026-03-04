@@ -11,7 +11,7 @@ exports.getAccounts = async (req, res) => {
 
     const payments = await Payment.find({
         paidDate: { $gte: start, $lt: end }
-    }).populate("family");
+    });
 
     const incomes = await Income.find({
         date: { $gte: start, $lt: end }
@@ -23,40 +23,60 @@ exports.getAccounts = async (req, res) => {
 
     const transactions = [];
 
+    // GROUP PAYMENTS BY DATE
+    const paymentMap = {};
+
     payments.forEach(p => {
 
+        const date = new Date(p.paidDate).toISOString().split("T")[0];
+
+        if (!paymentMap[date]) {
+            paymentMap[date] = 0;
+        }
+
+        paymentMap[date] += p.amount;
+
+    });
+
+    Object.keys(paymentMap).forEach(date => {
+
         transactions.push({
-            date: p.paidDate,
+            date: date,
             type: "payment",
-            description: `Family ${p.family.familyId}`,
-            remarks: p.remarks || "",
-            amount: p.amount
+            description: "Monthly Payment",
+            remarks: "",
+            amount: paymentMap[date]
         });
 
     });
 
+    // INCOMES
     incomes.forEach(i => {
 
         transactions.push({
             date: i.date,
             type: "income",
             description: i.description,
+            remarks: "",
             amount: i.amount
         });
 
     });
 
+    // EXPENSES
     expenses.forEach(e => {
 
         transactions.push({
             date: e.date,
             type: "expense",
             description: e.description,
+            remarks: "",
             amount: e.amount
         });
 
     });
 
+    // SORT BY DATE
     transactions.sort((a,b)=> new Date(a.date) - new Date(b.date));
 
     res.json({ transactions });
