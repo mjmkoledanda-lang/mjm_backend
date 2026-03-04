@@ -95,13 +95,32 @@ exports.filterFamilies = async (req, res) => {
         if (program)
             memberQuery.programs = program;
 
-        if (disability) {
-            memberQuery.disabilityDetails = {
-                $regex: disability,
-                $options: "i"
-            };
+        // =============================
+// DISABILITY FILTER
+// =============================
+        if (disability === "true") {
+
+            // Head with disability
+            headQuery.headDisabilityDetails = { $ne: "" };
+
+            // Members with disability
+            memberQuery.disabilityDetails = { $ne: "" };
         }
 
+        if (disability === "false") {
+
+            // Head without disability
+            headQuery.$or = [
+                { headDisabilityDetails: "" },
+                { headDisabilityDetails: null }
+            ];
+
+            // Members without disability
+            memberQuery.$or = [
+                { disabilityDetails: "" },
+                { disabilityDetails: null }
+            ];
+        }
         // =========================
         // 4️⃣ EXECUTE QUERIES
         // =========================
