@@ -26,14 +26,22 @@ exports.getAccounts = async (req, res) => {
         const transactions = [];
 
         // =============================
-        // GROUP PAYMENTS BY DATE
+        // GROUP PAYMENTS BY LOCAL DATE
         // =============================
 
         const paymentMap = {};
 
         payments.forEach(p => {
 
-            const date = new Date(p.paidDate).toISOString().split("T")[0];
+            // LOCAL DATE (Sri Lanka safe)
+            const d = new Date(p.paidDate);
+
+            const date =
+                d.getFullYear() +
+                "-" +
+                String(d.getMonth() + 1).padStart(2, "0") +
+                "-" +
+                String(d.getDate()).padStart(2, "0");
 
             if (!paymentMap[date]) {
                 paymentMap[date] = 0;
@@ -61,9 +69,18 @@ exports.getAccounts = async (req, res) => {
 
         incomes.forEach(i => {
 
+            const d = new Date(i.date);
+
+            const date =
+                d.getFullYear() +
+                "-" +
+                String(d.getMonth() + 1).padStart(2, "0") +
+                "-" +
+                String(d.getDate()).padStart(2, "0");
+
             transactions.push({
-                _id: i._id,   // IMPORTANT
-                date: i.date,
+                _id: i._id,
+                date: date,
                 type: "income",
                 description: i.description,
                 remarks: "",
@@ -78,9 +95,18 @@ exports.getAccounts = async (req, res) => {
 
         expenses.forEach(e => {
 
+            const d = new Date(e.date);
+
+            const date =
+                d.getFullYear() +
+                "-" +
+                String(d.getMonth() + 1).padStart(2, "0") +
+                "-" +
+                String(d.getDate()).padStart(2, "0");
+
             transactions.push({
-                _id: e._id,   // IMPORTANT
-                date: e.date,
+                _id: e._id,
+                date: date,
                 type: "expense",
                 description: e.description,
                 remarks: "",
