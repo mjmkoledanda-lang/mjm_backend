@@ -4,80 +4,107 @@ const Expense = require("../models/Expense");
 
 exports.getAccounts = async (req, res) => {
 
-    const { year, month } = req.params;
+    try {
 
-    const start = new Date(year, month - 1, 1);
-    const end = new Date(year, month, 1);
+        const { year, month } = req.params;
 
-    const payments = await Payment.find({
-        paidDate: { $gte: start, $lt: end }
-    });
+        const start = new Date(year, month - 1, 1);
+        const end = new Date(year, month, 1);
 
-    const incomes = await Income.find({
-        date: { $gte: start, $lt: end }
-    });
-
-    const expenses = await Expense.find({
-        date: { $gte: start, $lt: end }
-    });
-
-    const transactions = [];
-
-    // GROUP PAYMENTS BY DATE
-    const paymentMap = {};
-
-    payments.forEach(p => {
-
-        const date = new Date(p.paidDate).toISOString().split("T")[0];
-
-        if (!paymentMap[date]) {
-            paymentMap[date] = 0;
-        }
-
-        paymentMap[date] += p.amount;
-
-    });
-
-    Object.keys(paymentMap).forEach(date => {
-
-        transactions.push({
-            date: date,
-            type: "payment",
-            description: "Monthly Payment",
-            remarks: "",
-            amount: paymentMap[date]
+        const payments = await Payment.find({
+            paidDate: { $gte: start, $lt: end }
         });
 
-    });
-
-    // INCOMES
-    incomes.forEach(i => {
-
-        transactions.push({
-            id: i._id,
-            date: i.date,
-            type: "income",
-            description: i.description,
-            amount: i.amount
-        });
-    });
-
-    // EXPENSES
-    expenses.forEach(e => {
-
-        transactions.push({
-            id: e._id,
-            date: e.date,
-            type: "expense",
-            description: e.description,
-            amount: e.amount
+        const incomes = await Income.find({
+            date: { $gte: start, $lt: end }
         });
 
-    });
+        const expenses = await Expense.find({
+            date: { $gte: start, $lt: end }
+        });
 
-    // SORT BY DATE
-    transactions.sort((a,b)=> new Date(a.date) - new Date(b.date));
+        const transactions = [];
 
-    res.json({ transactions });
+        // =============================
+        // GROUP PAYMENTS BY DATE
+        // =============================
+
+        const paymentMap = {};
+
+        payments.forEach(p => {
+
+            const date = new Date(p.paidDate).toISOString().split("T")[0];
+
+            if (!paymentMap[date]) {
+                paymentMap[date] = 0;
+            }
+
+            paymentMap[date] += p.amount;
+
+        });
+
+        Object.keys(paymentMap).forEach(date => {
+
+            transactions.push({
+                date: date,
+                type: "payment",
+                description: "Monthly Payment",
+                remarks: "",
+                amount: paymentMap[date]
+            });
+
+        });
+
+        // =============================
+        // INCOME TRANSACTIONS
+        // =============================
+
+        incomes.forEach(i => {
+
+            transactions.push({
+                _id: i._id,   // IMPORTANT
+                date: i.date,
+                type: "income",
+                description: i.description,
+                remarks: "",
+                amount: i.amount
+            });
+
+        });
+
+        // =============================
+        // EXPENSE TRANSACTIONS
+        // =============================
+
+        expenses.forEach(e => {
+
+            transactions.push({
+                _id: e._id,   // IMPORTANT
+                date: e.date,
+                type: "expense",
+                description: e.description,
+                remarks: "",
+                amount: e.amount
+            });
+
+        });
+
+        // =============================
+        // SORT BY DATE
+        // =============================
+
+        transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        res.json({ transactions });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            message: "Failed to load accounts"
+        });
+
+    }
 
 };
