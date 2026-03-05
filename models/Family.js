@@ -23,6 +23,10 @@ const familySchema = new mongoose.Schema({
     email: String,
     houseNumber: String,
     address: String,
+    manualArrears: {
+        type: Number,
+        default: 0
+    },
     addressOther: String,
     gsDivision: String,
     monthlyAmount: {

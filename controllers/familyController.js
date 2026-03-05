@@ -3,17 +3,54 @@ const Member = require("../models/Member");
 
 exports.createFamily = async (req, res) => {
     try {
-        const existing = await Family.findOne({ familyId: req.body.familyId });
+
+        const {
+            familyId,
+            headDisabilityType,
+            headDisabilityDetails,
+            headDisability,
+            manualArrears, // ✅ NEW FIELD
+            ...rest
+        } = req.body;
+
+        // 🔴 Check duplicate family ID
+        const existing = await Family.findOne({ familyId });
 
         if (existing) {
-            return res.status(400).json({ message: "Family ID already exists" });
+            return res.status(400).json({
+                message: "Family ID already exists"
+            });
         }
 
-        const family = await Family.create(req.body);
+        // Determine disability value
+        const finalHeadDisability =
+            headDisabilityType === "OTHER"
+                ? headDisabilityDetails
+                : headDisabilityType;
+
+        const family = await Family.create({
+            familyId,
+            ...rest,
+
+            headDateOfBirth: rest.headDateOfBirth || null,
+
+            // Disability
+            headDisability: headDisability || false,
+
+            headDisabilityDetails: headDisability
+                ? finalHeadDisability
+                : "",
+
+            // ✅ STORE MANUAL ARREARS
+            manualArrears: manualArrears || 0
+        });
+
         res.status(201).json(family);
 
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(400).json({
+            message: error.message
+        });
     }
 };
 
