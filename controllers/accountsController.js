@@ -6,19 +6,19 @@ exports.getAccounts = async (req, res) => {
 
     try {
 
-        const { year, month } = req.params;
+        const { year, month, day } = req.params;
+
+        // Create day start and end (Sri Lanka timezone safe)
+        const start = new Date(Date.UTC(year, month - 1, day));
+        const end = new Date(Date.UTC(year, month - 1, Number(day) + 1));
 
         // =============================
         // FETCH DATA
         // =============================
 
         const payments = await Payment.find({
-            year: Number(year),
-            month: Number(month)
+            paidDate: { $gte: start, $lt: end }
         });
-
-        const start = new Date(Date.UTC(year, month - 1, 1));
-        const end = new Date(Date.UTC(year, month, 1));
 
         const incomes = await Income.find({
             date: { $gte: start, $lt: end }
@@ -31,10 +31,8 @@ exports.getAccounts = async (req, res) => {
         const transactions = [];
 
         // =============================
-        // GROUP PAYMENTS BY DATE
+        // PAYMENTS
         // =============================
-
-        const paymentMap = {};
 
         payments.forEach(p => {
 
@@ -42,28 +40,19 @@ exports.getAccounts = async (req, res) => {
                 timeZone: "Asia/Colombo"
             });
 
-            if (!paymentMap[date]) {
-                paymentMap[date] = 0;
-            }
-
-            paymentMap[date] += p.amount;
-
-        });
-
-        Object.keys(paymentMap).forEach(date => {
-
             transactions.push({
+                _id: p._id,
                 date,
                 type: "payment",
                 description: "Monthly Payment",
                 remarks: "",
-                amount: paymentMap[date]
+                amount: p.amount
             });
 
         });
 
         // =============================
-        // INCOME TRANSACTIONS
+        // INCOMES
         // =============================
 
         incomes.forEach(i => {
@@ -84,7 +73,7 @@ exports.getAccounts = async (req, res) => {
         });
 
         // =============================
-        // EXPENSE TRANSACTIONS
+        // EXPENSES
         // =============================
 
         expenses.forEach(e => {
@@ -105,7 +94,7 @@ exports.getAccounts = async (req, res) => {
         });
 
         // =============================
-        // SORT BY DATE
+        // SORT
         // =============================
 
         transactions.sort((a, b) => a.date.localeCompare(b.date));
