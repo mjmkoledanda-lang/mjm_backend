@@ -49,6 +49,7 @@ exports.getAccounts = async (req, res) => {
 
             transactions.push({
                 date,
+                originalDate: p.paidDate,
                 type: "payment",
                 description: "Monthly Payment",
                 remarks: "",
@@ -70,6 +71,7 @@ exports.getAccounts = async (req, res) => {
             transactions.push({
                 _id: i._id,
                 date,
+                originalDate: i.date,
                 type: "income",
                 description: i.description,
                 remarks: "",
@@ -91,6 +93,7 @@ exports.getAccounts = async (req, res) => {
             transactions.push({
                 _id: e._id,
                 date,
+                originalDate: e.date,
                 type: "expense",
                 description: e.description,
                 remarks: "",
@@ -104,20 +107,7 @@ exports.getAccounts = async (req, res) => {
         // =============================
 
         transactions.sort((a, b) => {
-
-            const dateA = new Date(a.date).getTime();
-            const dateB = new Date(b.date).getTime();
-
-            if (dateA === dateB) {
-
-                if (a.type === "expense") return 1;
-                if (b.type === "expense") return -1;
-
-                return 0;
-            }
-
-            return dateA - dateB;
-
+            return new Date(a.originalDate) - new Date(b.originalDate);
         });
 
         // ⭐ YOU MISSED THIS LINE
