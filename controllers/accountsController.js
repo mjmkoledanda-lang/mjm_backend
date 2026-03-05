@@ -28,7 +28,6 @@ exports.getAccounts = async (req, res) => {
         // =============================
         // GROUP PAYMENTS
         // =============================
-
         const paymentMap = {};
 
         payments.forEach(p => {
@@ -38,10 +37,13 @@ exports.getAccounts = async (req, res) => {
             });
 
             if (!paymentMap[date]) {
-                paymentMap[date] = 0;
+                paymentMap[date] = {
+                    total: 0,
+                    originalDate: p.paidDate
+                };
             }
 
-            paymentMap[date] += p.amount;
+            paymentMap[date].total += p.amount;
 
         });
 
@@ -49,11 +51,11 @@ exports.getAccounts = async (req, res) => {
 
             transactions.push({
                 date,
-                originalDate: p.paidDate,
+                originalDate: paymentMap[date].originalDate,
                 type: "payment",
                 description: "Monthly Payment",
                 remarks: "",
-                amount: paymentMap[date]
+                amount: paymentMap[date].total
             });
 
         });
