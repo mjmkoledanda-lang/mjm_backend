@@ -8,13 +8,17 @@ exports.getAccounts = async (req, res) => {
 
         const { year, month } = req.params;
 
-        // Use UTC safe date range
-        const start = new Date(Date.UTC(year, month - 1, 1));
-        const end = new Date(Date.UTC(year, month, 1));
+        // =============================
+        // FETCH DATA
+        // =============================
 
         const payments = await Payment.find({
-            paidDate: { $gte: start, $lt: end }
+            year: Number(year),
+            month: Number(month)
         });
+
+        const start = new Date(Date.UTC(year, month - 1, 1));
+        const end = new Date(Date.UTC(year, month, 1));
 
         const incomes = await Income.find({
             date: { $gte: start, $lt: end }
@@ -27,7 +31,7 @@ exports.getAccounts = async (req, res) => {
         const transactions = [];
 
         // =============================
-        // GROUP PAYMENTS BY LOCAL DATE
+        // GROUP PAYMENTS BY DATE
         // =============================
 
         const paymentMap = {};
@@ -104,7 +108,7 @@ exports.getAccounts = async (req, res) => {
         // SORT BY DATE
         // =============================
 
-        transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+        transactions.sort((a, b) => a.date.localeCompare(b.date));
 
         res.json({ transactions });
 
