@@ -8,7 +8,6 @@ exports.getAccounts = async (req, res) => {
 
         const { year, month } = req.params;
 
-        // Use UTC safe date range
         const start = new Date(Date.UTC(year, month - 1, 1));
         const end = new Date(Date.UTC(year, month, 1));
 
@@ -27,7 +26,7 @@ exports.getAccounts = async (req, res) => {
         const transactions = [];
 
         // =============================
-        // GROUP PAYMENTS BY LOCAL DATE
+        // GROUP PAYMENTS
         // =============================
 
         const paymentMap = {};
@@ -59,7 +58,7 @@ exports.getAccounts = async (req, res) => {
         });
 
         // =============================
-        // INCOME TRANSACTIONS
+        // INCOMES
         // =============================
 
         incomes.forEach(i => {
@@ -80,7 +79,7 @@ exports.getAccounts = async (req, res) => {
         });
 
         // =============================
-        // EXPENSE TRANSACTIONS
+        // EXPENSES
         // =============================
 
         expenses.forEach(e => {
@@ -101,7 +100,7 @@ exports.getAccounts = async (req, res) => {
         });
 
         // =============================
-        // SORT BY DATE
+        // SORT TRANSACTIONS
         // =============================
 
         transactions.sort((a, b) => {
@@ -120,6 +119,9 @@ exports.getAccounts = async (req, res) => {
             return dateA - dateB;
 
         });
+
+        // ⭐ YOU MISSED THIS LINE
+        res.json({ transactions });
 
     } catch (error) {
 
