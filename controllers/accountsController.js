@@ -104,9 +104,22 @@ exports.getAccounts = async (req, res) => {
         // SORT BY DATE
         // =============================
 
-        transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+        transactions.sort((a, b) => {
 
-        res.json({ transactions });
+            const dateA = new Date(a.date).getTime();
+            const dateB = new Date(b.date).getTime();
+
+            if (dateA === dateB) {
+
+                if (a.type === "expense") return 1;
+                if (b.type === "expense") return -1;
+
+                return 0;
+            }
+
+            return dateA - dateB;
+
+        });
 
     } catch (error) {
 
