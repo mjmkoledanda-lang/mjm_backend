@@ -6,17 +6,24 @@ const Family = require("../models/Family");
 // ================================
 exports.markPayment = async (req, res) => {
     try {
-        const { family, year, month, amount } = req.body;
 
-        if (!family || !year || !month || !amount) {
+        const { family, year, month } = req.body;
+
+        if (!family || !year || !month) {
             return res.status(400).json({
                 message: "All fields are required"
             });
         }
 
+        const familyData = await Family.findById(family);
+
+        if (!familyData)
+            return res.status(404).json({ message: "Family not found" });
+
         const yearNum = Number(year);
         const monthNum = Number(month);
-        const amountNum = Number(amount);
+
+        const amountNum = Number(familyData.monthlyAmount);
 
         let payment = await Payment.findOne({
             family,
@@ -25,10 +32,13 @@ exports.markPayment = async (req, res) => {
         });
 
         if (payment) {
+
             payment.paidDate = new Date();
             payment.amount = amountNum;
             await payment.save();
+
         } else {
+
             payment = await Payment.create({
                 family,
                 year: yearNum,
@@ -37,6 +47,7 @@ exports.markPayment = async (req, res) => {
                 paidDate: new Date(),
                 receiptPrinted: false
             });
+
         }
 
         res.status(200).json(payment);
@@ -207,11 +218,11 @@ exports.sendPaymentSMS = async (req, res) => {
             paidFor = "Monthly Contribution";
         }
 
-        const message = `Muhiyaddeen Jummah Masjid
+        const message = `Muhiyaddeen Jummah Mosque,Koledanda,Weligama.
 
 Payment Receipt
 
-Receipt No: ${payment._id}
+
 
 Family ID: ${family.familyId}
 Head: ${family.headName}
