@@ -306,15 +306,19 @@ Date: ${new Date().toLocaleDateString()}
 
 Thank you.`;
 
+// Prevent duplicate SMS
+        if (payment.smsSent) {
+            return res.json({ message: "SMS already sent for this receipt" });
+        }
+
+// Send SMS
         await sendSMS(phone, message);
 
-        res.json({ message: "SMS sent successfully" });
+// Mark SMS as sent
+        payment.smsSent = true;
+        await payment.save();
 
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "SMS failed" });
-    }
-};
+        res.json({ message: "SMS sent successfully" });
 
 
 // ================================

@@ -14,6 +14,10 @@ const paymentSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
+    smsSent: {
+        type: Boolean,
+        default: false
+    },
     receiptPrinted: {
         type: Boolean,
         default: false
