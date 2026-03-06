@@ -320,6 +320,14 @@ Thank you.`;
 
         res.json({ message: "SMS sent successfully" });
 
+    } catch (error) {
+
+        console.log(error);
+        res.status(500).json({ message: "SMS failed" });
+
+    }
+};
+
 
 // ================================
 // DELETE PAYMENT
