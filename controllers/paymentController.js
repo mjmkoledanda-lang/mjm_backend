@@ -134,6 +134,22 @@ exports.markReceiptPrinted = async (req, res) => {
 
             const phone = "94" + family.phone.replace(/^0/, "");
 
+            // months and year coming from frontend
+            const { months, year } = req.body;
+
+            const monthNames = [
+                "Jan","Feb","Mar","Apr","May","Jun",
+                "Jul","Aug","Sep","Oct","Nov","Dec"
+            ];
+
+            let paidFor = payment.month;
+
+            if (months && months.length > 0) {
+                paidFor = months
+                    .map(m => `${monthNames[m-1]} ${year}`)
+                    .join(", ");
+            }
+
             // 🔥 Calculate arrears
             const payments = await Payment.find({
                 family: family._id
@@ -160,6 +176,9 @@ exports.markReceiptPrinted = async (req, res) => {
 
             const totalArrears = Math.max(expectedTotal - totalPaid, 0);
 
+            const amount =
+                (months?.length || 1) * Number(family.monthlyAmount || 0);
+
             const message = `Muhiyaddeen Jummah Mosque, Koledanda, Weligama
 
 Payment Receipt
@@ -168,7 +187,7 @@ Family ID: ${family.familyId}
 Head: ${family.headName}
 
 Paid For: ${payment.month}
-Amount: Rs.${payment.amount.toLocaleString()}
+Amount: Rs.${amount.toLocaleString()}
 Total Arrears: Rs.${totalArrears.toLocaleString()}
 
 Date: ${new Date().toLocaleDateString()}
@@ -315,7 +334,7 @@ Payment Receipt
 Family ID: ${family.familyId}
 Head: ${family.headName}
 
-Paid For: ${paidFor}
+Paid For: ${payment.month}
 Amount: Rs.${amount.toLocaleString()}
 Total Arrears: Rs.${totalArrears.toLocaleString()}
 
