@@ -283,7 +283,6 @@ exports.sendPaymentSMS = async (req, res) => {
 
         const phone = "94" + family.phone.replace(/^0/, "");
 
-        // months sent from frontend
         const { months, year } = req.body;
 
         const monthNames = [
@@ -291,11 +290,14 @@ exports.sendPaymentSMS = async (req, res) => {
             "Jul","Aug","Sep","Oct","Nov","Dec"
         ];
 
-        let paidFor = payment.month;
+        let paidFor = "N/A";
 
         if (months && months.length > 0) {
-            paidFor = months
-                .map(m => `${monthNames[m - 1]} ${year}`)
+
+            const uniqueMonths = [...new Set(months)].sort((a,b)=>a-b);
+
+            paidFor = uniqueMonths
+                .map(m => `${monthNames[m-1]} ${year}`)
                 .join(", ");
         }
 
@@ -335,7 +337,7 @@ Payment Receipt
 Family ID: ${family.familyId}
 Head: ${family.headName}
 
-Paid For: ${payment.month}
+Paid For: ${paidFor}
 Amount: Rs.${amount.toLocaleString()}
 Total Arrears: Rs.${totalArrears.toLocaleString()}
 
@@ -343,15 +345,7 @@ Date: ${new Date().toLocaleDateString()}
 
 Thank you.`;
 
-        // Prevent duplicate SMS
-        if (payment.smsSent) {
-            return res.json({ message: "SMS already sent for this receipt" });
-        }
-
         await sendSMS(phone, message);
-
-        payment.smsSent = true;
-        await payment.save();
 
         res.json({ message: "SMS sent successfully" });
 
