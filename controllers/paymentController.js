@@ -263,7 +263,21 @@ exports.sendPaymentSMS = async (req, res) => {
 
         const phone = "94" + family.phone.replace(/^0/, "");
 
+        // months sent from frontend
+        const { months, year } = req.body;
+
+        const monthNames = [
+            "Jan","Feb","Mar","Apr","May","Jun",
+            "Jul","Aug","Sep","Oct","Nov","Dec"
+        ];
+
         let paidFor = payment.month;
+
+        if (months && months.length > 0) {
+            paidFor = months
+                .map(m => `${monthNames[m - 1]} ${year}`)
+                .join(", ");
+        }
 
         // 🔥 Calculate arrears
         const payments = await Payment.find({
@@ -291,6 +305,9 @@ exports.sendPaymentSMS = async (req, res) => {
 
         const totalArrears = Math.max(expectedTotal - totalPaid, 0);
 
+        const amount =
+            (months?.length || 1) * Number(family.monthlyAmount || 0);
+
         const message = `Muhiyaddeen Jummah Mosque, Koledanda, Weligama
 
 Payment Receipt
@@ -299,22 +316,20 @@ Family ID: ${family.familyId}
 Head: ${family.headName}
 
 Paid For: ${paidFor}
-Amount: Rs.${payment.amount.toLocaleString()}
+Amount: Rs.${amount.toLocaleString()}
 Total Arrears: Rs.${totalArrears.toLocaleString()}
 
 Date: ${new Date().toLocaleDateString()}
 
 Thank you.`;
 
-// Prevent duplicate SMS
+        // Prevent duplicate SMS
         if (payment.smsSent) {
             return res.json({ message: "SMS already sent for this receipt" });
         }
 
-// Send SMS
         await sendSMS(phone, message);
 
-// Mark SMS as sent
         payment.smsSent = true;
         await payment.save();
 
