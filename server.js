@@ -44,6 +44,7 @@ app.use("/api/accounts", accountsRoutes);
 app.use("/api/income", require("./routes/incomeRoutes"));
 app.use("/api/expense", require("./routes/expenseRoutes"));
 app.use("/api/custom-payments", require("./routes/customPaymentRoutes"));
+app.use("/api/sms", require("./routes/smsRoutes"));
 
 // ===============================
 // START SERVER (LAST LINE ONLY)
