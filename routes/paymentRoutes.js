@@ -50,13 +50,14 @@ router.get(
 // ==============================
 // Mark Receipt Printed
 // ==============================
-router.put(
-    "/mark-printed/:id",
-    protect,
-    authorizeRoles("superadmin", "admin"),
-    markReceiptPrinted
-);
+// router.put(
+//     "/mark-printed/:id",
+//     protect,
+//     authorizeRoles("superadmin", "admin"),
+//     markReceiptPrinted
+// );
 
+router.put("/payments/print/:id", markReceiptPrinted);
 
 // ==============================
 // Send SMS Receipt
