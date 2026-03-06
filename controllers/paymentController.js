@@ -142,10 +142,13 @@ exports.markReceiptPrinted = async (req, res) => {
                 "Jul","Aug","Sep","Oct","Nov","Dec"
             ];
 
-            let paidFor = payment.month;
+            let paidFor = "N/A";
 
             if (months && months.length > 0) {
-                paidFor = months
+
+                const uniqueMonths = [...new Set(months)].sort((a,b)=>a-b);
+
+                paidFor = uniqueMonths
                     .map(m => `${monthNames[m-1]} ${year}`)
                     .join(", ");
             }
@@ -186,7 +189,7 @@ Payment Receipt
 Family ID: ${family.familyId}
 Head: ${family.headName}
 
-Paid For: ${payment.month}
+Paid For: ${paidFor}
 Amount: Rs.${amount.toLocaleString()}
 Total Arrears: Rs.${totalArrears.toLocaleString()}
 
@@ -206,8 +209,6 @@ Thank you.`;
         res.status(500).json({ message: error.message });
     }
 };
-
-
 // ================================
 // PAYMENT SUMMARY
 // ================================
