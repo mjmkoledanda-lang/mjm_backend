@@ -182,7 +182,7 @@ exports.markReceiptPrinted = async (req, res) => {
             const amount =
                 (months?.length || 1) * Number(family.monthlyAmount || 0);
 
-            const message = `Muhiyaddeen Jummah Mosque, Koledanda, Weligama
+            const message = `Muhiyaddeen Jummah Mosque, Koledanda, Weligama.
 
 Payment Receipt
 
@@ -195,7 +195,7 @@ Total Arrears: Rs.${totalArrears.toLocaleString()}
 
 Date: ${new Date().toLocaleDateString()}
 
-Thank you.`;
+Jazakallah Khair.`;
 
             await sendSMS(phone, message);
         }
@@ -330,7 +330,7 @@ exports.sendPaymentSMS = async (req, res) => {
         const amount =
             (months?.length || 1) * Number(family.monthlyAmount || 0);
 
-        const message = `Muhiyaddeen Jummah Mosque, Koledanda, Weligama
+        const message = `Muhiyaddeen Jummah Mosque, Koledanda, Weligama.
 
 Payment Receipt
 
@@ -343,7 +343,7 @@ Total Arrears: Rs.${totalArrears.toLocaleString()}
 
 Date: ${new Date().toLocaleDateString()}
 
-Thank you.`;
+Jazakallah Khair.`;
 
         await sendSMS(phone, message);
 
