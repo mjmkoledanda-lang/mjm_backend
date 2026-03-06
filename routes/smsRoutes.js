@@ -1,10 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const {
-    sendPaymentSMS,
-    sendCustomSMS
-} = require("../controllers/smsController"); // ✅ fixed
+const smsController = require("../controllers/smsController");
 
 const { protect } = require("../middleware/authMiddleware");
 const { authorizeRoles } = require("../middleware/roleMiddleware");
@@ -17,7 +14,7 @@ router.post(
     "/send-payment/:id",
     protect,
     authorizeRoles("superadmin", "admin"),
-    sendPaymentSMS
+    smsController.sendPaymentSMS
 );
 
 
@@ -28,7 +25,7 @@ router.post(
     "/send-custom",
     protect,
     authorizeRoles("superadmin"),
-    sendCustomSMS
+    smsController.sendCustomSMS
 );
 
 module.exports = router;

@@ -1,28 +1,76 @@
+const Family = require("../models/Family");
+const Payment = require("../models/Payment");
+const sendSMS = require("../utils/sendSMS");
+
+
+// ==============================
+// Send Payment Receipt SMS
+// ==============================
+exports.sendPaymentSMS = async (req, res) => {
+
+    try {
+
+        const payment = await Payment.findById(req.params.id).populate("family");
+
+        if (!payment) {
+            return res.status(404).json({ message: "Payment not found" });
+        }
+
+        const family = payment.family;
+
+        if (!family || !family.phone) {
+            return res.status(400).json({ message: "Family phone not found" });
+        }
+
+        const phone = "94" + family.phone.replace(/^0/, "");
+
+        const message = `Muhiyaddeen Jummah Mosque
+Koledanda, Weligama
+
+Payment Receipt
+
+Family ID: ${family.familyId}
+Head: ${family.headName}
+
+Paid For: ${payment.month}/${payment.year}
+Amount: Rs.${payment.amount}
+
+Jazakallah`;
+
+        await sendSMS(phone, message);
+
+        res.json({ message: "SMS sent successfully" });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({ message: "SMS sending failed" });
+
+    }
+
+};
+
+
+// ==============================
+// Send Custom SMS to All Families
+// ==============================
 exports.sendCustomSMS = async (req, res) => {
+
     try {
 
         let { message } = req.body;
 
         if (!message || !message.trim()) {
-            return res.status(400).json({
-                message: "Message required"
-            });
+            return res.status(400).json({ message: "Message required" });
         }
 
         message = message.trim();
 
-        // Get families with phone numbers
         const families = await Family.find({
             phone: { $exists: true, $ne: "" }
         });
 
-        if (!families.length) {
-            return res.status(404).json({
-                message: "No phone numbers found"
-            });
-        }
-
-        // Remove duplicates
         const uniquePhones = [...new Set(
             families.map(f => f.phone)
         )];
@@ -34,32 +82,15 @@ exports.sendCustomSMS = async (req, res) => {
 
             try {
 
-                if (!rawPhone) {
-                    failed++;
-                    continue;
-                }
-
-                // Clean phone number
-                let cleanPhone = rawPhone
+                const cleanPhone = rawPhone
                     .replace(/\s/g, "")
                     .replace(/[^0-9]/g, "");
 
-                // Convert to Sri Lanka format
-                if (cleanPhone.startsWith("0")) {
-                    cleanPhone = "94" + cleanPhone.substring(1);
-                }
+                const phone = "94" + cleanPhone.replace(/^0/, "");
 
-                if (cleanPhone.startsWith("94") === false) {
-                    failed++;
-                    continue;
-                }
-
-                await sendSMS(cleanPhone, message);
+                await sendSMS(phone, message);
 
                 sent++;
-
-                // small delay (important for SMS gateway)
-                await new Promise(resolve => setTimeout(resolve, 150));
 
             } catch (err) {
 
@@ -79,11 +110,10 @@ exports.sendCustomSMS = async (req, res) => {
 
     } catch (error) {
 
-        console.error("Custom SMS Error:", error);
+        console.error(error);
 
-        res.status(500).json({
-            message: "SMS sending failed"
-        });
+        res.status(500).json({ message: "SMS sending failed" });
 
     }
+
 };
