@@ -230,6 +230,8 @@ Head: ${family.headName}
 Paid For: ${paidFor}
 Amount: Rs.${payment.amount}
 
+Total Arrears: Rs.${totalArrears}
+
 Date: ${new Date().toLocaleDateString()}
 
 Thank you.`;
