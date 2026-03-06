@@ -7,7 +7,8 @@ const {
     deletePayment,
     markReceiptPrinted,
     getPaymentSummary,
-    sendPaymentSMS, togglePaymentStatus   // ✅ make sure this exists in controller
+    sendPaymentSMS,
+    togglePaymentStatus
 } = require("../controllers/paymentController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -37,7 +38,7 @@ router.post(
 
 
 // ==============================
-// Get Payments By Year
+// Get Payments By Family + Year
 // ==============================
 router.get(
     "/:familyId/:year",
@@ -48,19 +49,18 @@ router.get(
 
 
 // ==============================
-// Mark Receipt Printed
+// Mark Receipt Printed + Send SMS
 // ==============================
-// router.put(
-//     "/mark-printed/:id",
-//     protect,
-//     authorizeRoles("superadmin", "admin"),
-//     markReceiptPrinted
-// );
+router.put(
+    "/print/:id",
+    protect,
+    authorizeRoles("superadmin", "admin"),
+    markReceiptPrinted
+);
 
-router.put("/payments/print/:id", markReceiptPrinted);
 
 // ==============================
-// Send SMS Receipt
+// Send SMS Manually
 // ==============================
 router.post(
     "/:id/send-sms",
@@ -69,12 +69,27 @@ router.post(
     sendPaymentSMS
 );
 
+
+// ==============================
+// Toggle Payment Status
+// ==============================
 router.patch(
     "/:id/toggle",
     protect,
+    authorizeRoles("superadmin", "admin"),
     togglePaymentStatus
 );
 
-router.delete("/:id", protect, deletePayment);
+
+// ==============================
+// Delete Payment
+// ==============================
+router.delete(
+    "/:id",
+    protect,
+    authorizeRoles("superadmin", "admin"),
+    deletePayment
+);
+
 
 module.exports = router;
