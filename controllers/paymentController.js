@@ -1,7 +1,6 @@
 const Payment = require("../models/Payment");
 const Family = require("../models/Family");
 
-
 // ================================
 // CREATE OR MARK PAYMENT
 // ================================
@@ -195,7 +194,7 @@ exports.sendPaymentSMS = async (req, res) => {
             return res.status(400).json({ message: "Family phone not found" });
 
         // Convert Sri Lanka number
-        const phone = "+94" + family.phone.replace(/^0/, "");
+        const phone = "94" + family.phone.replace(/^0/, "");
 
         // Handle months
         let paidFor = "";
@@ -208,20 +207,21 @@ exports.sendPaymentSMS = async (req, res) => {
             paidFor = "Monthly Contribution";
         }
 
-        const message = `
-Muhiyaddeen Jummah Masjid
+        const message = `Muhiyaddeen Jummah Masjid
+
 Payment Receipt
 
 Receipt No: ${payment._id}
+
 Family ID: ${family.familyId}
 Head: ${family.headName}
+
 Paid For: ${paidFor}
 Amount: Rs.${payment.amount}
-Date: ${new Date(payment.createdAt).toLocaleDateString()}
 
-Thank you.
-`;
+Date: ${new Date().toLocaleDateString()}
 
+Thank you.`;
         await sendSMS(phone, message);
 
         res.json({ message: "SMS sent successfully" });
