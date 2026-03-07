@@ -1,6 +1,9 @@
 const Family = require("../models/Family");
 const Member = require("../models/Member");
 
+// ============================
+// CREATE FAMILY
+// ============================
 exports.createFamily = async (req, res) => {
     try {
 
@@ -9,11 +12,14 @@ exports.createFamily = async (req, res) => {
             headDisabilityType,
             headDisabilityDetails,
             headDisability,
-            manualArrears, // ✅ NEW FIELD
+            manualArrears,
             ...rest
         } = req.body;
 
-        // 🔴 Check duplicate family ID
+        // Remove empty enum values
+        if (rest.headMaritalStatus === "") delete rest.headMaritalStatus;
+
+        // Check duplicate family ID
         const existing = await Family.findOne({ familyId });
 
         if (existing) {
@@ -22,7 +28,6 @@ exports.createFamily = async (req, res) => {
             });
         }
 
-        // Determine disability value
         const finalHeadDisability =
             headDisabilityType === "OTHER"
                 ? headDisabilityDetails
@@ -34,14 +39,12 @@ exports.createFamily = async (req, res) => {
 
             headDateOfBirth: rest.headDateOfBirth || null,
 
-            // Disability
             headDisability: headDisability || false,
 
             headDisabilityDetails: headDisability
                 ? finalHeadDisability
                 : "",
 
-            // ✅ STORE MANUAL ARREARS
             manualArrears: manualArrears || 0
         });
 
@@ -54,9 +57,12 @@ exports.createFamily = async (req, res) => {
     }
 };
 
-
+// ============================
+// GET FAMILY BY FAMILY ID
+// ============================
 exports.getFamilyById = async (req, res) => {
     try {
+
         const family = await Family.findOne({
             familyId: req.params.id
         });
@@ -67,7 +73,6 @@ exports.getFamilyById = async (req, res) => {
             });
         }
 
-        // 🔥 Fetch members linked to this family
         const members = await Member.find({
             family: family._id
         });
@@ -83,8 +88,13 @@ exports.getFamilyById = async (req, res) => {
         });
     }
 };
+
+// ============================
+// GET ALL FAMILIES
+// ============================
 exports.getAllFamilies = async (req, res) => {
     try {
+
         const families = await Family.find().sort({ familyId: 1 });
 
         const familiesWithStats = await Promise.all(
@@ -92,16 +102,14 @@ exports.getAllFamilies = async (req, res) => {
 
                 const members = await Member.find({ family: family._id });
 
-                // Count male/female from members
                 let maleCount = members.filter(
-                    m => m.gender && m.gender.toUpperCase() === "MALE"
+                    m => m.gender?.toUpperCase() === "MALE"
                 ).length;
 
                 let femaleCount = members.filter(
-                    m => m.gender && m.gender.toUpperCase() === "FEMALE"
+                    m => m.gender?.toUpperCase() === "FEMALE"
                 ).length;
 
-                // Include head gender
                 if (family.headGender?.toUpperCase() === "MALE") {
                     maleCount += 1;
                 }
@@ -110,7 +118,6 @@ exports.getAllFamilies = async (req, res) => {
                     femaleCount += 1;
                 }
 
-                // 🔥 Total = male + female
                 const totalMembers = maleCount + femaleCount;
 
                 return {
@@ -125,38 +132,43 @@ exports.getAllFamilies = async (req, res) => {
         res.json(familiesWithStats);
 
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({
+            message: error.message
+        });
     }
 };
+
+// ============================
+// SEARCH FAMILY
+// ============================
 exports.searchFamilies = async (req, res) => {
     try {
+
         const keyword = req.params.keyword;
 
-        // 1️⃣ Search by head name
         const familiesByHead = await Family.find({
             headName: { $regex: keyword, $options: "i" }
         });
 
-        // 2️⃣ Search members by register number
         const members = await Member.find({
             registerNumber: { $regex: keyword, $options: "i" }
         });
 
-        // Get family IDs from members
         const familyIdsFromMembers = members.map(m => m.family);
 
         const familiesByRegister = await Family.find({
             _id: { $in: familyIdsFromMembers }
         });
 
-        // Combine & remove duplicates
         const allFamilies = [
             ...familiesByHead,
             ...familiesByRegister
         ];
 
         const uniqueFamilies = Array.from(
-            new Map(allFamilies.map(f => [f._id.toString(), f])).values()
+            new Map(
+                allFamilies.map(f => [f._id.toString(), f])
+            ).values()
         );
 
         res.json(uniqueFamilies);
@@ -167,11 +179,19 @@ exports.searchFamilies = async (req, res) => {
         });
     }
 };
+
+// ============================
+// UPDATE FAMILY
+// ============================
 exports.updateFamily = async (req, res) => {
     try {
 
         const updateData = { ...req.body };
+
         delete updateData._id;
+
+        if (updateData.headMaritalStatus === "")
+            delete updateData.headMaritalStatus;
 
         const family = await Family.findByIdAndUpdate(
             req.params.id,
@@ -194,42 +214,9 @@ exports.updateFamily = async (req, res) => {
     }
 };
 
-exports.createFamily = async (req, res) => {
-    try {
-
-        const {
-            headDisabilityType,
-            headDisabilityDetails,
-            headDisability,
-            ...rest
-        } = req.body;
-
-        const finalHeadDisability =
-            headDisabilityType === "OTHER"
-                ? headDisabilityDetails
-                : headDisabilityType;
-
-        const family = await Family.create({
-            ...rest,
-            headDateOfBirth: rest.headDateOfBirth || null,
-
-            // ✅ ADD THIS
-            headDisability: headDisability || false,
-
-            headDisabilityDetails: headDisability
-                ? finalHeadDisability
-                : ""
-        });
-
-        res.status(201).json(family);
-
-    } catch (error) {
-        res.status(400).json({
-            message: error.message
-        });
-    }
-};
+// ============================
 // DELETE FAMILY
+// ============================
 exports.deleteFamily = async (req, res) => {
     try {
 
@@ -243,10 +230,8 @@ exports.deleteFamily = async (req, res) => {
             });
         }
 
-        // 🔥 Delete all members first
         await Member.deleteMany({ family: familyId });
 
-        // 🔥 Delete family
         await Family.findByIdAndDelete(familyId);
 
         res.json({
@@ -255,20 +240,29 @@ exports.deleteFamily = async (req, res) => {
 
     } catch (error) {
         console.log(error);
+
         res.status(500).json({
             message: error.message
         });
     }
 };
+
+// ============================
+// GET LAST FAMILY
+// ============================
 exports.getLastFamily = async (req, res) => {
     try {
+
         const lastFamily = await Family
             .findOne()
             .sort({ createdAt: -1 })
             .select("familyId headName");
 
         res.json(lastFamily);
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({
+            message: error.message
+        });
     }
 };
