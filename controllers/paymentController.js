@@ -182,7 +182,7 @@ exports.markReceiptPrinted = async (req, res) => {
             const amount =
                 (months?.length || 1) * Number(family.monthlyAmount || 0);
 
-            const message = `Muhiyaddeen Jummah Mosque, Koledanda, Weligama.
+            const message = `Muhiyaddeen Jummah Masjid, Koledanda, Weligama.
 
 Payment Receipt
 
@@ -331,7 +331,7 @@ exports.sendPaymentSMS = async (req, res) => {
         const amount =
             (months?.length || 1) * Number(family.monthlyAmount || 0);
 
-        const message = `Muhiyaddeen Jummah Mosque, Koledanda, Weligama.
+        const message = `Muhiyaddeen Jummah Masjid, Koledanda, Weligama.
 
 Payment Receipt
 

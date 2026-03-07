@@ -14,26 +14,20 @@ exports.filterFamilies = async (req, res) => {
             disasterStatus,
             program,
             disability,
-            widow,
+            maritalStatus,
             converted
         } = req.body || {};
 
         let results = [];
 
         // =========================
-        // 1️⃣ WIDOW / CONVERTED → HEAD ONLY
+        // CONVERTED → HEAD ONLY
         // =========================
-        if (widow || converted) {
+        if (converted !== undefined && converted !== "") {
 
-            let headQuery = {};
-
-            if (widow !== undefined && widow !== "") {
-                headQuery.widow = widow === "true";
-            }
-
-            if (converted !== undefined && converted !== "") {
-                headQuery.converted = converted === "true";
-            }
+            let headQuery = {
+                converted: converted === "true"
+            };
 
             const heads = await Family.find(headQuery);
 
@@ -52,7 +46,7 @@ exports.filterFamilies = async (req, res) => {
         }
 
         // =========================
-        // 2️⃣ BUILD HEAD QUERY
+        // BUILD HEAD QUERY
         // =========================
         let headQuery = {};
 
@@ -68,15 +62,25 @@ exports.filterFamilies = async (req, res) => {
         if (educationLevel)
             headQuery.headEducationLevel = educationLevel;
 
-        if (disability) {
-            headQuery.headDisabilityDetails = {
-                $regex: disability,
-                $options: "i"
-            };
+        if (maritalStatus)
+            headQuery.headMaritalStatus = maritalStatus;
+
+        // =============================
+        // DISABILITY FILTER FOR HEAD
+        // =============================
+        if (disability === "true") {
+            headQuery.headDisabilityDetails = { $ne: "" };
+        }
+
+        if (disability === "false") {
+            headQuery.$or = [
+                { headDisabilityDetails: "" },
+                { headDisabilityDetails: null }
+            ];
         }
 
         // =========================
-        // 3️⃣ BUILD MEMBER QUERY
+        // BUILD MEMBER QUERY
         // =========================
         let memberQuery = {};
 
@@ -92,43 +96,34 @@ exports.filterFamilies = async (req, res) => {
         if (educationLevel)
             memberQuery.educationLevel = educationLevel;
 
+        if (maritalStatus)
+            memberQuery.maritalStatus = maritalStatus;
+
         if (program)
             memberQuery.programs = program;
 
         // =============================
-// DISABILITY FILTER
-// =============================
+        // DISABILITY FILTER FOR MEMBERS
+        // =============================
         if (disability === "true") {
-
-            // Head with disability
-            headQuery.headDisabilityDetails = { $ne: "" };
-
-            // Members with disability
             memberQuery.disabilityDetails = { $ne: "" };
         }
 
         if (disability === "false") {
-
-            // Head without disability
-            headQuery.$or = [
-                { headDisabilityDetails: "" },
-                { headDisabilityDetails: null }
-            ];
-
-            // Members without disability
             memberQuery.$or = [
                 { disabilityDetails: "" },
                 { disabilityDetails: null }
             ];
         }
+
         // =========================
-        // 4️⃣ EXECUTE QUERIES
+        // EXECUTE QUERIES
         // =========================
         const heads = await Family.find(headQuery);
         const members = await Member.find(memberQuery).populate("family");
 
         // =========================
-        // 5️⃣ PUSH HEAD RESULTS
+        // PUSH HEAD RESULTS
         // =========================
         heads.forEach(f => {
             results.push({
@@ -137,12 +132,13 @@ exports.filterFamilies = async (req, res) => {
                 gender: f.headGender,
                 familyId: f.familyId,
                 occupation: f.headOccupation,
+                maritalStatus: f.headMaritalStatus,
                 disability: f.headDisabilityDetails
             });
         });
 
         // =========================
-        // 6️⃣ PUSH MEMBER RESULTS
+        // PUSH MEMBER RESULTS
         // =========================
         members.forEach(m => {
             results.push({
@@ -151,6 +147,7 @@ exports.filterFamilies = async (req, res) => {
                 gender: m.gender,
                 familyId: m.family ? m.family.familyId : "",
                 occupation: m.occupation,
+                maritalStatus: m.maritalStatus,
                 disability: m.disabilityDetails
             });
         });
