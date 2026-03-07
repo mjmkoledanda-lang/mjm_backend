@@ -338,6 +338,7 @@ Family ID: ${family.familyId}
 Name: ${family.headName}
 
 Paid For: ${paidFor}
+
 Amount: Rs.${amount.toLocaleString()}
 Total Arrears: Rs.${totalArrears.toLocaleString()}
 
