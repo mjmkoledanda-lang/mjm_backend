@@ -7,30 +7,36 @@ const Family = require("../models/Family");
 exports.createMember = async (req, res) => {
     try {
 
-        const { familyId, ...memberData } = req.body;
+        let { familyId, family, ...memberData } = req.body;
 
-        if (!familyId) {
+        // Support both familyId and family
+        if (!familyId && !family) {
             return res.status(400).json({
-                message: "familyId is required"
+                message: "Family ID is required"
             });
         }
 
-        // Find family using familyId (131, 131A, 131B, 131C)
-        const family = await Family.findOne({ familyId });
+        let familyDoc;
 
-        if (!family) {
+        if (familyId) {
+            familyDoc = await Family.findOne({ familyId });
+        } else {
+            familyDoc = await Family.findById(family);
+        }
+
+        if (!familyDoc) {
             return res.status(404).json({
                 message: "Family not found"
             });
         }
 
-        // Remove empty enum values
+        // Prevent enum errors
         if (memberData.gender === "") delete memberData.gender;
         if (memberData.maritalStatus === "") delete memberData.maritalStatus;
 
         const member = await Member.create({
             ...memberData,
-            family: family._id
+            family: familyDoc._id
         });
 
         res.status(201).json(member);
@@ -49,7 +55,7 @@ exports.createMember = async (req, res) => {
 exports.getMembersByFamily = async (req, res) => {
     try {
 
-        const familyId = req.params.familyId;
+        const { familyId } = req.params;
 
         const family = await Family.findOne({ familyId });
 
@@ -79,11 +85,28 @@ exports.getMembersByFamily = async (req, res) => {
 exports.updateMember = async (req, res) => {
     try {
 
-        const updateData = { ...req.body };
+        let updateData = { ...req.body };
 
         delete updateData._id;
 
-        // Prevent enum errors
+        // Handle family update
+        if (updateData.familyId) {
+
+            const family = await Family.findOne({
+                familyId: updateData.familyId
+            });
+
+            if (!family) {
+                return res.status(404).json({
+                    message: "Family not found"
+                });
+            }
+
+            updateData.family = family._id;
+            delete updateData.familyId;
+        }
+
+        // Prevent enum validation errors
         if (updateData.gender === "") delete updateData.gender;
         if (updateData.maritalStatus === "") delete updateData.maritalStatus;
 
