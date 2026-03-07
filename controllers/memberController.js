@@ -9,7 +9,7 @@ exports.createMember = async (req, res) => {
 
         let { familyId, family, ...memberData } = req.body;
 
-        // Support both familyId and family
+        // Validate family input
         if (!familyId && !family) {
             return res.status(400).json({
                 message: "Family ID is required"
@@ -18,6 +18,7 @@ exports.createMember = async (req, res) => {
 
         let familyDoc;
 
+        // Find family by familyId or ObjectId
         if (familyId) {
             familyDoc = await Family.findOne({ familyId });
         } else {
@@ -30,14 +31,25 @@ exports.createMember = async (req, res) => {
             });
         }
 
-        // Prevent enum errors
-        if (memberData.gender === "") delete memberData.gender;
-        if (memberData.maritalStatus === "") delete memberData.maritalStatus;
+        // Clean empty enum values
+        if (!memberData.gender) delete memberData.gender;
+        if (!memberData.maritalStatus) delete memberData.maritalStatus;
 
-        const member = await Member.create({
+        // Normalize uppercase
+        if (memberData.gender) {
+            memberData.gender = memberData.gender.toUpperCase();
+        }
+
+        if (memberData.maritalStatus) {
+            memberData.maritalStatus = memberData.maritalStatus.toUpperCase();
+        }
+
+        const member = new Member({
             ...memberData,
             family: familyDoc._id
         });
+
+        await member.save();
 
         res.status(201).json(member);
 
@@ -65,9 +77,9 @@ exports.getMembersByFamily = async (req, res) => {
             });
         }
 
-        const members = await Member.find({
-            family: family._id
-        }).sort({ createdAt: 1 });
+        const members = await Member
+            .find({ family: family._id })
+            .sort({ createdAt: 1 });
 
         res.json(members);
 
@@ -89,7 +101,7 @@ exports.updateMember = async (req, res) => {
 
         delete updateData._id;
 
-        // Handle family update
+        // Handle family change
         if (updateData.familyId) {
 
             const family = await Family.findOne({
@@ -106,14 +118,23 @@ exports.updateMember = async (req, res) => {
             delete updateData.familyId;
         }
 
-        // Prevent enum validation errors
-        if (updateData.gender === "") delete updateData.gender;
-        if (updateData.maritalStatus === "") delete updateData.maritalStatus;
+        // Clean empty enum values
+        if (!updateData.gender) delete updateData.gender;
+        if (!updateData.maritalStatus) delete updateData.maritalStatus;
+
+        // Normalize uppercase
+        if (updateData.gender) {
+            updateData.gender = updateData.gender.toUpperCase();
+        }
+
+        if (updateData.maritalStatus) {
+            updateData.maritalStatus = updateData.maritalStatus.toUpperCase();
+        }
 
         const member = await Member.findByIdAndUpdate(
             req.params.id,
             updateData,
-            { new: true }
+            { new: true, runValidators: true }
         );
 
         if (!member) {
