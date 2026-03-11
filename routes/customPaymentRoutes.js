@@ -14,6 +14,7 @@ router.post("/", async (req, res) => {
         const payment = new CustomPayment({
             family: req.body.family,
             familyId: req.body.familyId,
+            headTitle: req.body.headTitle,   // ADD THIS
             headName: req.body.headName,
             type: req.body.type,
             amount: req.body.amount

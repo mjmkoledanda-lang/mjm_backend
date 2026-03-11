@@ -187,7 +187,7 @@ exports.markReceiptPrinted = async (req, res) => {
 Payment Receipt
 
 Family ID: ${family.familyId}
-Name: ${family.headName}
+Name: ${family.headTitle ? family.headTitle + " " : ""}${family.headName}
 
 Paid For: ${paidFor}
 
@@ -336,7 +336,7 @@ exports.sendPaymentSMS = async (req, res) => {
 Payment Receipt
 
 Family ID: ${family.familyId}
-Name: ${family.headName}
+Name: ${family.headTitle ? family.headTitle + " " : ""}${family.headName}
 
 Paid For: ${paidFor}
 
