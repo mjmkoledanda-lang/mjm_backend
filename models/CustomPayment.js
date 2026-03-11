@@ -11,6 +11,8 @@ const customPaymentSchema = new mongoose.Schema({
 
     headName: String,
 
+    headTitle: String,
+
     type: String, // Donation, Zakat, etc
 
     amount: Number,
