@@ -8,6 +8,11 @@ const familySchema = new mongoose.Schema({
         trim: true
     },
 
+    headTitle: {
+        type: String
+    },
+
+
     headName: String,
 
     headGender: {
