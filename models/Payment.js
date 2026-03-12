@@ -24,4 +24,7 @@ const paymentSchema = new mongoose.Schema({
     }
 });
 
+// 🔥 VERY IMPORTANT INDEX
+paymentSchema.index({ family: 1, year: 1, month: 1 });
+
 module.exports = mongoose.model("Payment", paymentSchema);
