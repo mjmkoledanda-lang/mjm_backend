@@ -226,7 +226,7 @@ exports.getPaymentSummary = async (req, res) => {
 
         const payments = await Payment.find({
             family: family._id
-        }).sort({ year: -1, month: -1 });
+        }).sort({ paidDate: -1 });
 
         const START_YEAR = 2020;
         const START_MONTH = 1;
@@ -263,50 +263,6 @@ exports.getPaymentSummary = async (req, res) => {
         console.error("Summary Error:", err);
         res.status(500).json({ message: err.message });
     }
-};
-
-exports.bulkPayUntilMonth = async (req, res) => {
-
-    try {
-
-        const { family, year, month } = req.body;
-
-        const familyData = await Family.findById(family);
-
-        if (!familyData)
-            return res.status(404).json({ message: "Family not found" });
-
-        const amount = Number(familyData.monthlyAmount);
-
-        const payments = [];
-
-        for (let y = 2020; y <= year; y++) {
-
-            const maxMonth = y === year ? month : 12;
-
-            for (let m = 1; m <= maxMonth; m++) {
-
-                payments.push({
-                    family,
-                    year: y,
-                    month: m,
-                    amount,
-                    paidDate: new Date()
-                });
-
-            }
-        }
-
-        await Payment.insertMany(payments, { ordered: false });
-
-        res.json({ message: "Payments created" });
-
-    } catch (err) {
-
-        res.status(500).json({ message: err.message });
-
-    }
-
 };
 
 
