@@ -265,6 +265,50 @@ exports.getPaymentSummary = async (req, res) => {
     }
 };
 
+exports.bulkPayUntilMonth = async (req, res) => {
+
+    try {
+
+        const { family, year, month } = req.body;
+
+        const familyData = await Family.findById(family);
+
+        if (!familyData)
+            return res.status(404).json({ message: "Family not found" });
+
+        const amount = Number(familyData.monthlyAmount);
+
+        const payments = [];
+
+        for (let y = 2020; y <= year; y++) {
+
+            const maxMonth = y === year ? month : 12;
+
+            for (let m = 1; m <= maxMonth; m++) {
+
+                payments.push({
+                    family,
+                    year: y,
+                    month: m,
+                    amount,
+                    paidDate: new Date()
+                });
+
+            }
+        }
+
+        await Payment.insertMany(payments, { ordered: false });
+
+        res.json({ message: "Payments created" });
+
+    } catch (err) {
+
+        res.status(500).json({ message: err.message });
+
+    }
+
+};
+
 
 // ================================
 // MANUAL SMS SEND

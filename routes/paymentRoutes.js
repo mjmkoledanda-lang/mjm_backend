@@ -8,7 +8,7 @@ const {
     markReceiptPrinted,
     getPaymentSummary,
     sendPaymentSMS,
-    togglePaymentStatus
+    togglePaymentStatus, bulkPayUntilMonth
 } = require("../controllers/paymentController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -35,6 +35,9 @@ router.post(
     authorizeRoles("superadmin", "admin"),
     markPayment
 );
+
+
+router.post("/bulk", bulkPayUntilMonth);
 
 
 // ==============================
