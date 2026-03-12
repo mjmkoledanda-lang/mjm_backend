@@ -226,7 +226,7 @@ exports.getPaymentSummary = async (req, res) => {
 
         const payments = await Payment.find({
             family: family._id
-        }).sort({ paidDate: -1 });
+        }).sort({ year: -1, month: -1 });
 
         const START_YEAR = 2020;
         const START_MONTH = 1;
