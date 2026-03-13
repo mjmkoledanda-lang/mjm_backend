@@ -392,7 +392,8 @@ exports.getTotalArrearsAllFamilies = async (req, res) => {
             (currentYear - START_YEAR) * 12 +
             (currentMonth - START_MONTH + 1);
 
-        const families = await Family.aggregate([
+        const result = await Family.aggregate([
+
             {
                 $lookup: {
                     from: "payments",
@@ -401,21 +402,27 @@ exports.getTotalArrearsAllFamilies = async (req, res) => {
                     as: "payments"
                 }
             },
+
             {
                 $addFields: {
                     totalPaid: { $sum: "$payments.amount" }
                 }
             },
+
             {
                 $addFields: {
                     expectedTotal: {
-                        $multiply: ["$monthlyAmount", totalMonths]
+                        $multiply: [
+                            { $toDouble: "$monthlyAmount" },
+                            totalMonths
+                        ]
                     }
                 }
             },
+
             {
                 $addFields: {
-                    arrears: {
+                    arrearsFromPayments: {
                         $max: [
                             { $subtract: ["$expectedTotal", "$totalPaid"] },
                             0
@@ -423,15 +430,28 @@ exports.getTotalArrearsAllFamilies = async (req, res) => {
                     }
                 }
             },
+
+            {
+                $addFields: {
+                    totalFamilyArrears: {
+                        $add: [
+                            "$arrearsFromPayments",
+                            { $ifNull: ["$manualArrears", 0] }
+                        ]
+                    }
+                }
+            },
+
             {
                 $group: {
                     _id: null,
-                    totalArrears: { $sum: "$arrears" }
+                    totalArrears: { $sum: "$totalFamilyArrears" }
                 }
             }
+
         ]);
 
-        const totalArrears = families.length ? families[0].totalArrears : 0;
+        const totalArrears = result.length ? result[0].totalArrears : 0;
 
         res.json({ totalArrears });
 
