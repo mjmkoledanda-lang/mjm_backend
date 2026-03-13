@@ -405,7 +405,15 @@ exports.getTotalArrearsAllFamilies = async (req, res) => {
 
             {
                 $addFields: {
-                    totalPaid: { $sum: "$payments.amount" }
+                    totalPaid: {
+                        $sum: {
+                            $map: {
+                                input: "$payments",
+                                as: "p",
+                                in: { $ifNull: ["$$p.amount", 0] }
+                            }
+                        }
+                    }
                 }
             },
 
@@ -413,7 +421,11 @@ exports.getTotalArrearsAllFamilies = async (req, res) => {
                 $addFields: {
                     expectedTotal: {
                         $multiply: [
-                            { $toDouble: "$monthlyAmount" },
+                            {
+                                $toDouble: {
+                                    $ifNull: ["$monthlyAmount", 0]
+                                }
+                            },
                             totalMonths
                         ]
                     }
@@ -456,6 +468,7 @@ exports.getTotalArrearsAllFamilies = async (req, res) => {
         res.json({ totalArrears });
 
     } catch (error) {
+        console.error("TOTAL ARREARS ERROR:", error);
         res.status(500).json({ message: error.message });
     }
 };
