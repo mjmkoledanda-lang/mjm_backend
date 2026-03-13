@@ -125,7 +125,11 @@ exports.filterFamilies = async (req, res) => {
         // EXECUTE QUERIES
         // =========================
         const heads = await Family.find(headQuery);
-        const members = await Member.find(memberQuery).populate("family");
+        let members = await Member.find(memberQuery).populate("family");
+
+        if (color) {
+            members = members.filter(m => m.family && m.family.color === color);
+        }
 
         // =========================
         // PUSH HEAD RESULTS
