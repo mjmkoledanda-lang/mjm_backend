@@ -13,9 +13,9 @@ const familySchema = new mongoose.Schema({
     },
 
     color: {
-        type: String,
-        enum: ["red", "green", "yellow"],
-        default: "green"
+        type: [String],
+        enum: ["red", "green", "yellow", "black"],
+        default: ["green"]
     },
 
     headName: String,
