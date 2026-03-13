@@ -374,3 +374,28 @@ exports.deletePayment = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// ================================
+// TOTAL ARREARS OF ALL FAMILIES
+// ================================
+exports.getTotalArrearsAllFamilies = async (req, res) => {
+    try {
+
+        const result = await Family.aggregate([
+            {
+                $group: {
+                    _id: null,
+                    totalArrears: { $sum: "$totalArrears" }
+                }
+            }
+        ]);
+
+        const totalArrears =
+            result.length > 0 ? result[0].totalArrears : 0;
+
+        res.json({ totalArrears });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

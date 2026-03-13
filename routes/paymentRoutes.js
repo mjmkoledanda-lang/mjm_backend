@@ -8,7 +8,7 @@ const {
     markReceiptPrinted,
     getPaymentSummary,
     sendPaymentSMS,
-    togglePaymentStatus
+    togglePaymentStatus, getTotalArrearsAllFamilies
 } = require("../controllers/paymentController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -47,6 +47,12 @@ router.get(
     getPayments
 );
 
+router.get(
+    "/total-arrears-all",
+    protect,
+    authorizeRoles("superadmin", "admin"),
+    getTotalArrearsAllFamilies
+);
 
 // ==============================
 // Mark Receipt Printed + Send SMS
