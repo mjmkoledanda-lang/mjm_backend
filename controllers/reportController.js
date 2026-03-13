@@ -1,8 +1,6 @@
 const Family = require("../models/Family");
 const Payment = require("../models/Payment");
 
-const Family = require("../models/Family");
-const Payment = require("../models/Payment");
 
 exports.getMonthlyReport = async (req, res) => {
     try {
