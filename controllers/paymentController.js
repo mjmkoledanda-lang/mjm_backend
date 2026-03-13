@@ -381,21 +381,52 @@ exports.deletePayment = async (req, res) => {
 exports.getTotalArrearsAllFamilies = async (req, res) => {
     try {
 
-        const result = await Family.aggregate([
-            {
-                $group: {
-                    _id: null,
-                    totalArrears: { $sum: "$totalArrears" }
-                }
-            }
-        ]);
+        const families = await Family.find();
 
-        const totalArrears =
-            result.length > 0 ? result[0].totalArrears : 0;
+        const START_YEAR = 2020;
+        const START_MONTH = 1;
 
-        res.json({ totalArrears });
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1;
+
+        const totalMonths =
+            (currentYear - START_YEAR) * 12 +
+            (currentMonth - START_MONTH + 1);
+
+        let totalArrearsAll = 0;
+
+        for (const family of families) {
+
+            const payments = await Payment.find({
+                family: family._id
+            });
+
+            const expectedTotal =
+                totalMonths * Number(family.monthlyAmount || 0);
+
+            const totalPaid = payments.reduce(
+                (sum, p) => sum + Number(p.amount || 0),
+                0
+            );
+
+            const arrearsAfter2020 =
+                Math.max(expectedTotal - totalPaid, 0);
+
+            const manualArrears =
+                Number(family.manualArrears || 0);
+
+            totalArrearsAll += arrearsAfter2020 + manualArrears;
+        }
+
+        res.json({
+            totalArrears: totalArrearsAll
+        });
 
     } catch (error) {
+
+        console.error(error);
         res.status(500).json({ message: error.message });
+
     }
 };
