@@ -15,7 +15,8 @@ exports.filterFamilies = async (req, res) => {
             program,
             disability,
             maritalStatus,
-            converted
+            converted,
+            color   // ✅ ADD THIS
         } = req.body || {};
 
         let results = [];
@@ -52,6 +53,10 @@ exports.filterFamilies = async (req, res) => {
 
         if (gender === "MALE")
             headQuery.headGender = { $regex: "^male$", $options: "i" };
+
+        if (color) {
+            headQuery.color = color;
+        }
 
         if (gender === "FEMALE")
             headQuery.headGender = { $regex: "^female$", $options: "i" };
