@@ -1,5 +1,17 @@
 const mongoose = require("mongoose");
 
+const {
+    markPayment,
+    getPayments,
+    deletePayment,
+    markReceiptPrinted,
+    getPaymentSummary,
+    sendPaymentSMS,
+    togglePaymentStatus,
+    getTotalArrearsAllFamilies
+} = require("../controllers/paymentController");
+
+
 const paymentSchema = new mongoose.Schema({
     family: {
         type: mongoose.Schema.Types.ObjectId,
