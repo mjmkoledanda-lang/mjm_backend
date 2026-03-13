@@ -7,7 +7,6 @@ const sendSMS = require("../utils/sendSMS");
 // ================================
 exports.markPayment = async (req, res) => {
     try {
-
         const { family, year, month } = req.body;
 
         if (!family || !year || !month) {
@@ -18,13 +17,13 @@ exports.markPayment = async (req, res) => {
 
         const familyData = await Family.findById(family);
 
-        if (!familyData)
+        if (!familyData) {
             return res.status(404).json({ message: "Family not found" });
+        }
 
         const yearNum = Number(year);
         const monthNum = Number(month);
-
-        const amountNum = Number(familyData.monthlyAmount);
+        const amountNum = Number(familyData.monthlyAmount || 0);
 
         let payment = await Payment.findOne({
             family,
@@ -33,13 +32,10 @@ exports.markPayment = async (req, res) => {
         });
 
         if (payment) {
-
             payment.paidDate = new Date();
             payment.amount = amountNum;
             await payment.save();
-
         } else {
-
             payment = await Payment.create({
                 family,
                 year: yearNum,
@@ -48,12 +44,12 @@ exports.markPayment = async (req, res) => {
                 paidDate: new Date(),
                 receiptPrinted: false
             });
-
         }
 
         res.status(200).json(payment);
 
     } catch (error) {
+        console.error("MARK PAYMENT ERROR:", error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -64,7 +60,6 @@ exports.markPayment = async (req, res) => {
 // ================================
 exports.togglePaymentStatus = async (req, res) => {
     try {
-
         const payment = await Payment.findById(req.params.id);
 
         if (!payment) {
@@ -72,7 +67,6 @@ exports.togglePaymentStatus = async (req, res) => {
         }
 
         payment.paid = !payment.paid;
-
         await payment.save();
 
         res.json(payment);
@@ -88,7 +82,6 @@ exports.togglePaymentStatus = async (req, res) => {
 // ================================
 exports.getPayments = async (req, res) => {
     try {
-
         const familyId = req.params.familyId;
         const year = Number(req.params.year);
 
@@ -116,7 +109,6 @@ exports.getPayments = async (req, res) => {
 // ================================
 exports.markReceiptPrinted = async (req, res) => {
     try {
-
         const payment = await Payment.findById(req.params.id);
 
         if (!payment) {
@@ -131,10 +123,8 @@ exports.markReceiptPrinted = async (req, res) => {
         const family = await Family.findById(payment.family);
 
         if (family && family.phone) {
-
             const phone = "94" + family.phone.replace(/^0/, "");
 
-            // months and year coming from frontend
             const { months, year } = req.body;
 
             const monthNames = [
@@ -145,15 +135,13 @@ exports.markReceiptPrinted = async (req, res) => {
             let paidFor = "N/A";
 
             if (months && months.length > 0) {
-
-                const uniqueMonths = [...new Set(months)].sort((a,b)=>a-b);
+                const uniqueMonths = [...new Set(months)].sort((a, b) => a - b);
 
                 paidFor = uniqueMonths
-                    .map(m => `${monthNames[m-1]} ${year}`)
+                    .map(m => `${monthNames[m - 1]} ${year}`)
                     .join(", ");
             }
 
-            // 🔥 Calculate arrears
             const payments = await Payment.find({
                 family: family._id
             });
@@ -177,7 +165,9 @@ exports.markReceiptPrinted = async (req, res) => {
                 0
             );
 
-            const totalArrears = Math.max(expectedTotal - totalPaid, 0);
+            const arrearsAfter2020 = Math.max(expectedTotal - totalPaid, 0);
+            const manualArrears = Number(family.manualArrears || 0);
+            const totalArrears = arrearsAfter2020 + manualArrears;
 
             const amount =
                 (months?.length || 1) * Number(family.monthlyAmount || 0);
@@ -210,12 +200,13 @@ Jazakallah Khair.`;
         res.status(500).json({ message: error.message });
     }
 };
+
+
 // ================================
 // PAYMENT SUMMARY
 // ================================
 exports.getPaymentSummary = async (req, res) => {
     try {
-
         const { familyId } = req.params;
 
         const family = await Family.findOne({ familyId });
@@ -226,7 +217,7 @@ exports.getPaymentSummary = async (req, res) => {
 
         const payments = await Payment.find({
             family: family._id
-        }).sort({ paidDate: -1 });
+        }).sort({ year: -1, month: -1 }); // fixed
 
         const START_YEAR = 2020;
         const START_MONTH = 1;
@@ -247,7 +238,9 @@ exports.getPaymentSummary = async (req, res) => {
             0
         );
 
-        const totalArrears = Math.max(expectedTotal - totalPaid, 0);
+        const arrearsAfter2020 = Math.max(expectedTotal - totalPaid, 0);
+        const manualArrears = Number(family.manualArrears || 0);
+        const totalArrears = arrearsAfter2020 + manualArrears;
 
         const lastPayment = payments.length > 0 ? payments[0] : null;
 
@@ -271,16 +264,17 @@ exports.getPaymentSummary = async (req, res) => {
 // ================================
 exports.sendPaymentSMS = async (req, res) => {
     try {
-
         const payment = await Payment.findById(req.params.id);
 
-        if (!payment)
+        if (!payment) {
             return res.status(404).json({ message: "Payment not found" });
+        }
 
         const family = await Family.findById(payment.family);
 
-        if (!family || !family.phone)
+        if (!family || !family.phone) {
             return res.status(400).json({ message: "Family phone not found" });
+        }
 
         const phone = "94" + family.phone.replace(/^0/, "");
 
@@ -294,15 +288,13 @@ exports.sendPaymentSMS = async (req, res) => {
         let paidFor = "N/A";
 
         if (months && months.length > 0) {
-
-            const uniqueMonths = [...new Set(months)].sort((a,b)=>a-b);
+            const uniqueMonths = [...new Set(months)].sort((a, b) => a - b);
 
             paidFor = uniqueMonths
-                .map(m => `${monthNames[m-1]} ${year}`)
+                .map(m => `${monthNames[m - 1]} ${year}`)
                 .join(", ");
         }
 
-        // 🔥 Calculate arrears
         const payments = await Payment.find({
             family: family._id
         });
@@ -326,7 +318,9 @@ exports.sendPaymentSMS = async (req, res) => {
             0
         );
 
-        const totalArrears = Math.max(expectedTotal - totalPaid, 0);
+        const arrearsAfter2020 = Math.max(expectedTotal - totalPaid, 0);
+        const manualArrears = Number(family.manualArrears || 0);
+        const totalArrears = arrearsAfter2020 + manualArrears;
 
         const amount =
             (months?.length || 1) * Number(family.monthlyAmount || 0);
@@ -352,10 +346,8 @@ Jazakallah Khair.`;
         res.json({ message: "SMS sent successfully" });
 
     } catch (error) {
-
         console.log(error);
         res.status(500).json({ message: "SMS failed" });
-
     }
 };
 
@@ -365,22 +357,19 @@ Jazakallah Khair.`;
 // ================================
 exports.deletePayment = async (req, res) => {
     try {
-
         await Payment.findByIdAndDelete(req.params.id);
-
         res.json({ message: "Payment removed" });
-
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
+
 
 // ================================
 // TOTAL ARREARS OF ALL FAMILIES
 // ================================
 exports.getTotalArrearsAllFamilies = async (req, res) => {
     try {
-
         const START_YEAR = 2020;
         const START_MONTH = 1;
 
@@ -393,7 +382,6 @@ exports.getTotalArrearsAllFamilies = async (req, res) => {
             (currentMonth - START_MONTH + 1);
 
         const result = await Family.aggregate([
-
             {
                 $lookup: {
                     from: "payments",
@@ -402,7 +390,6 @@ exports.getTotalArrearsAllFamilies = async (req, res) => {
                     as: "payments"
                 }
             },
-
             {
                 $addFields: {
                     totalPaid: {
@@ -416,14 +403,16 @@ exports.getTotalArrearsAllFamilies = async (req, res) => {
                     }
                 }
             },
-
             {
                 $addFields: {
                     expectedTotal: {
                         $multiply: [
                             {
-                                $toDouble: {
-                                    $ifNull: ["$monthlyAmount", 0]
+                                $convert: {
+                                    input: { $ifNull: ["$monthlyAmount", 0] },
+                                    to: "double",
+                                    onError: 0,
+                                    onNull: 0
                                 }
                             },
                             totalMonths
@@ -431,7 +420,6 @@ exports.getTotalArrearsAllFamilies = async (req, res) => {
                     }
                 }
             },
-
             {
                 $addFields: {
                     arrearsFromPayments: {
@@ -442,25 +430,29 @@ exports.getTotalArrearsAllFamilies = async (req, res) => {
                     }
                 }
             },
-
             {
                 $addFields: {
                     totalFamilyArrears: {
                         $add: [
                             "$arrearsFromPayments",
-                            { $ifNull: ["$manualArrears", 0] }
+                            {
+                                $convert: {
+                                    input: { $ifNull: ["$manualArrears", 0] },
+                                    to: "double",
+                                    onError: 0,
+                                    onNull: 0
+                                }
+                            }
                         ]
                     }
                 }
             },
-
             {
                 $group: {
                     _id: null,
                     totalArrears: { $sum: "$totalFamilyArrears" }
                 }
             }
-
         ]);
 
         const totalArrears = result.length ? result[0].totalArrears : 0;

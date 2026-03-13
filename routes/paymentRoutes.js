@@ -8,11 +8,23 @@ const {
     markReceiptPrinted,
     getPaymentSummary,
     sendPaymentSMS,
-    togglePaymentStatus, getTotalArrearsAllFamilies
+    togglePaymentStatus,
+    getTotalArrearsAllFamilies
 } = require("../controllers/paymentController");
 
 const { protect } = require("../middleware/authMiddleware");
 const { authorizeRoles } = require("../middleware/roleMiddleware");
+
+
+// ==============================
+// TOTAL ARREARS OF ALL FAMILIES
+// ==============================
+router.get(
+    "/total-arrears-all",
+    protect,
+    authorizeRoles("superadmin", "admin"),
+    getTotalArrearsAllFamilies
+);
 
 
 // ==============================
@@ -36,23 +48,6 @@ router.post(
     markPayment
 );
 
-
-// ==============================
-// Get Payments By Family + Year
-// ==============================
-router.get(
-    "/:familyId/:year",
-    protect,
-    authorizeRoles("superadmin", "admin"),
-    getPayments
-);
-
-router.get(
-    "/total-arrears-all",
-    protect,
-    authorizeRoles("superadmin", "admin"),
-    getTotalArrearsAllFamilies
-);
 
 // ==============================
 // Mark Receipt Printed + Send SMS
@@ -84,6 +79,18 @@ router.patch(
     protect,
     authorizeRoles("superadmin", "admin"),
     togglePaymentStatus
+);
+
+
+// ==============================
+// Get Payments By Family + Year
+// (dynamic route must be after fixed routes)
+// ==============================
+router.get(
+    "/:familyId/:year",
+    protect,
+    authorizeRoles("superadmin", "admin"),
+    getPayments
 );
 
 

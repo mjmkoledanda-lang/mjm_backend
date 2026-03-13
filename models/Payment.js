@@ -1,27 +1,24 @@
 const mongoose = require("mongoose");
 
-const {
-    markPayment,
-    getPayments,
-    deletePayment,
-    markReceiptPrinted,
-    getPaymentSummary,
-    sendPaymentSMS,
-    togglePaymentStatus,
-    getTotalArrearsAllFamilies
-} = require("../controllers/paymentController");
-
-
 const paymentSchema = new mongoose.Schema({
     family: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Family",
         required: true
     },
-    year: Number,
-    month: Number,
-    amount: Number,
-    remarks: String,   // ADD THIS
+    year: {
+        type: Number,
+        required: true
+    },
+    month: {
+        type: Number,
+        required: true
+    },
+    amount: {
+        type: Number,
+        default: 0
+    },
+    remarks: String,
     paidDate: {
         type: Date,
         default: Date.now
@@ -36,7 +33,11 @@ const paymentSchema = new mongoose.Schema({
     }
 });
 
-// 🔥 VERY IMPORTANT INDEX
-paymentSchema.index({ family: 1, year: 1, month: 1 });
+
+// Prevent duplicate payments
+paymentSchema.index({ family: 1, year: 1, month: 1 }, { unique: true });
+
+// Speed up family queries
+paymentSchema.index({ family: 1 });
 
 module.exports = mongoose.model("Payment", paymentSchema);
