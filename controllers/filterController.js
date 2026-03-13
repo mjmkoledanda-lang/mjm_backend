@@ -85,6 +85,53 @@ exports.filterFamilies = async (req, res) => {
         }
 
         // =========================
+// COLOR FILTER → HEAD ONLY
+// =========================
+        if (color) {
+
+            let headQuery = { color };
+
+            if (gender === "MALE")
+                headQuery.headGender = { $regex: "^male$", $options: "i" };
+
+            if (gender === "FEMALE")
+                headQuery.headGender = { $regex: "^female$", $options: "i" };
+
+            if (occupation)
+                headQuery.headOccupation = occupation;
+
+            if (educationLevel)
+                headQuery.headEducationLevel = educationLevel;
+
+            if (maritalStatus)
+                headQuery.headMaritalStatus = maritalStatus;
+
+            if (disability === "true")
+                headQuery.headDisabilityDetails = { $ne: "" };
+
+            if (disability === "false")
+                headQuery.$or = [
+                    { headDisabilityDetails: "" },
+                    { headDisabilityDetails: null }
+                ];
+
+            const heads = await Family.find(headQuery);
+
+            const results = heads.map(f => ({
+                type: "HEAD",
+                name: f.headName,
+                gender: f.headGender,
+                familyId: f.familyId,
+                occupation: f.headOccupation,
+                maritalStatus: f.headMaritalStatus,
+                disability: f.headDisabilityDetails,
+                color: f.color
+            }));
+
+            return res.json(results);
+        }
+
+        // =========================
         // BUILD MEMBER QUERY
         // =========================
         let memberQuery = {};
