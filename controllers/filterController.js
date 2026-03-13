@@ -138,7 +138,8 @@ exports.filterFamilies = async (req, res) => {
                 familyId: f.familyId,
                 occupation: f.headOccupation,
                 maritalStatus: f.headMaritalStatus,
-                disability: f.headDisabilityDetails
+                disability: f.headDisabilityDetails,
+                color: f.color   // ✅ ADD
             });
         });
 
