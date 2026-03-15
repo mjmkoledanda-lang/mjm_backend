@@ -15,15 +15,17 @@ router.post("/", async (req, res) => {
             .findOne()
             .sort({ receiptNo: -1 });
 
-        const receiptNo = lastPayment
-            ? lastPayment.receiptNo + 1
-            : 1001;
+        let receiptNo = 1001;
+
+        if (lastPayment && lastPayment.receiptNo) {
+            receiptNo = Number(lastPayment.receiptNo) + 1;
+        }
 
         const payment = new CustomPayment({
             receiptNo,
-            name: req.body.name,
-            description: req.body.description,
-            amount: Number(req.body.amount),   // ✅ ensure number
+            name: req.body.name || "",
+            description: req.body.description || "",
+            amount: Number(req.body.amount),
             date: req.body.date || new Date(),
             familyId: req.body.familyId || null
         });
@@ -34,7 +36,7 @@ router.post("/", async (req, res) => {
 
     } catch (err) {
 
-        console.error(err);
+        console.error("CUSTOM PAYMENT ERROR:", err);
 
         res.status(500).json({
             message: err.message
