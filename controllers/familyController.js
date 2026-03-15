@@ -95,46 +95,68 @@ exports.getFamilyById = async (req, res) => {
 exports.getAllFamilies = async (req, res) => {
     try {
 
-        const families = await Family.find().sort({ familyId: 1 });
+        // Get all families
+        const families = await Family.find()
+            .sort({ familyId: 1 })
+            .lean();
 
-        const familiesWithStats = await Promise.all(
-            families.map(async (family) => {
+        // Get all members
+        const members = await Member.find()
+            .select("family gender")
+            .lean();
 
-                const members = await Member.find({ family: family._id });
+        // Create member lookup map
+        const memberMap = {};
 
-                let maleCount = members.filter(
-                    m => m.gender?.toUpperCase() === "MALE"
-                ).length;
+        members.forEach(m => {
 
-                let femaleCount = members.filter(
-                    m => m.gender?.toUpperCase() === "FEMALE"
-                ).length;
+            const famId = m.family.toString();
 
-                if (family.headGender?.toUpperCase() === "MALE") {
-                    maleCount += 1;
-                }
+            if (!memberMap[famId]) {
+                memberMap[famId] = { male: 0, female: 0 };
+            }
 
-                if (family.headGender?.toUpperCase() === "FEMALE") {
-                    femaleCount += 1;
-                }
+            if (m.gender?.toUpperCase() === "MALE")
+                memberMap[famId].male++;
 
-                const totalMembers = maleCount + femaleCount;
+            if (m.gender?.toUpperCase() === "FEMALE")
+                memberMap[famId].female++;
 
-                return {
-                    ...family.toObject(),
-                    totalMembers,
-                    maleCount,
-                    femaleCount
-                };
-            })
-        );
+        });
+
+        const familiesWithStats = families.map(family => {
+
+            const stats = memberMap[family._id.toString()] || {
+                male: 0,
+                female: 0
+            };
+
+            let maleCount = stats.male;
+            let femaleCount = stats.female;
+
+            if (family.headGender?.toUpperCase() === "MALE")
+                maleCount++;
+
+            if (family.headGender?.toUpperCase() === "FEMALE")
+                femaleCount++;
+
+            return {
+                ...family,
+                totalMembers: maleCount + femaleCount,
+                maleCount,
+                femaleCount
+            };
+
+        });
 
         res.json(familiesWithStats);
 
     } catch (error) {
+
         res.status(500).json({
             message: error.message
         });
+
     }
 };
 
