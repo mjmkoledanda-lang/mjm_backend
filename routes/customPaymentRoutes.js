@@ -20,8 +20,12 @@ router.post("/", async (req, res) => {
             : 1001;
 
         const payment = new CustomPayment({
-            ...req.body,
-            receiptNo
+            receiptNo,
+            name: req.body.name,
+            description: req.body.description,
+            amount: req.body.amount,
+            date: req.body.date || new Date(),
+            familyId: req.body.familyId || null
         });
 
         await payment.save();
@@ -29,32 +33,11 @@ router.post("/", async (req, res) => {
         res.json(payment);
 
     } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
 
-});
-
-router.post("/", async (req, res) => {
-
-    try {
-
-        const payment = new CustomPayment({
-            family: req.body.family,
-            familyId: req.body.familyId,
-            headTitle: req.body.headTitle,   // ADD THIS
-            headName: req.body.headName,
-            type: req.body.type,
-            amount: req.body.amount
-        });
-
-        await payment.save();
-
-        res.json(payment);
-
-    } catch (err) {
+        console.error(err);
 
         res.status(500).json({
-            message: "Failed to add payment"
+            message: err.message
         });
 
     }

@@ -8,7 +8,8 @@ const CustomPaymentSchema = new mongoose.Schema({
 
     familyId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Family"
+        ref: "Family",
+        default: null   // ✅ allows non-registered people
     },
 
     name: String,
@@ -20,6 +21,6 @@ const CustomPaymentSchema = new mongoose.Schema({
         default: Date.now
     }
 
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model("CustomPayment", CustomPaymentSchema);
