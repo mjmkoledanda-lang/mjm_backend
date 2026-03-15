@@ -1,7 +1,6 @@
 const Family = require("../models/Family");
 const Payment = require("../models/Payment");
 
-
 exports.getMonthlyReport = async (req, res) => {
     try {
 
@@ -13,13 +12,38 @@ exports.getMonthlyReport = async (req, res) => {
             });
         }
 
-        // 1️⃣ Get all families
-        const families = await Family.find().sort({ familyId: 1 });
+        // 1️⃣ Get families (lean = faster)
+        const families = await Family.find()
+            .select("familyId headName headTitle monthlyAmount manualArrears")
+            .lean()
+            .sort({ familyId: 1 });
 
-        // 2️⃣ Get all payments
-        const payments = await Payment.find();
+        // 2️⃣ Get payments
+        const payments = await Payment.find()
+            .select("family amount year month")
+            .lean();
 
-        // 3️⃣ Constants
+        // 3️⃣ Build payment map
+        const paymentTotals = {};
+        const paymentsOfYear = [];
+
+        payments.forEach(p => {
+
+            const famId = String(p.family);
+
+            if (!paymentTotals[famId]) {
+                paymentTotals[famId] = 0;
+            }
+
+            paymentTotals[famId] += Number(p.amount || 0);
+
+            if (Number(p.year) === year) {
+                paymentsOfYear.push(p);
+            }
+
+        });
+
+        // 4️⃣ Calculate arrears
         const START_YEAR = 2020;
         const START_MONTH = 1;
 
@@ -31,17 +55,9 @@ exports.getMonthlyReport = async (req, res) => {
             (currentYear - START_YEAR) * 12 +
             (currentMonth - START_MONTH + 1);
 
-        // 4️⃣ Add arrears to each family
         const familiesWithArrears = families.map(f => {
 
-            const familyPayments = payments.filter(
-                p => String(p.family) === String(f._id)
-            );
-
-            const totalPaid = familyPayments.reduce(
-                (sum, p) => sum + Number(p.amount || 0),
-                0
-            );
+            const totalPaid = paymentTotals[String(f._id)] || 0;
 
             const expectedTotal =
                 totalMonths * Number(f.monthlyAmount || 0);
@@ -56,16 +72,11 @@ exports.getMonthlyReport = async (req, res) => {
                 arrearsFromPayments + manualArrears;
 
             return {
-                ...f.toObject(),
+                ...f,
                 totalArrears
             };
 
         });
-
-        // 5️⃣ Payments only for selected year (for checkmarks)
-        const paymentsOfYear = payments.filter(
-            p => Number(p.year) === year
-        );
 
         res.json({
             families: familiesWithArrears,
