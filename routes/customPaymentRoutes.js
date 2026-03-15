@@ -11,6 +11,33 @@ router.post("/", async (req, res) => {
 
     try {
 
+        const lastPayment = await CustomPayment
+            .findOne()
+            .sort({ receiptNo: -1 });
+
+        const receiptNo = lastPayment
+            ? lastPayment.receiptNo + 1
+            : 1001;
+
+        const payment = new CustomPayment({
+            ...req.body,
+            receiptNo
+        });
+
+        await payment.save();
+
+        res.json(payment);
+
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+
+});
+
+router.post("/", async (req, res) => {
+
+    try {
+
         const payment = new CustomPayment({
             family: req.body.family,
             familyId: req.body.familyId,

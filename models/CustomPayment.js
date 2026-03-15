@@ -1,20 +1,18 @@
 const mongoose = require("mongoose");
 
-const customPaymentSchema = new mongoose.Schema({
+const CustomPaymentSchema = new mongoose.Schema({
+    receiptNo: {
+        type: Number,
+        unique: true
+    },
 
-    family: {
+    familyId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Family"
     },
 
-    familyId: String,
-
-    headName: String,
-
-    headTitle: String,
-
-    type: String, // Donation, Zakat, etc
-
+    name: String,
+    description: String,
     amount: Number,
 
     date: {
@@ -24,4 +22,4 @@ const customPaymentSchema = new mongoose.Schema({
 
 });
 
-module.exports = mongoose.model("CustomPayment", customPaymentSchema);
+module.exports = mongoose.model("CustomPayment", CustomPaymentSchema);
