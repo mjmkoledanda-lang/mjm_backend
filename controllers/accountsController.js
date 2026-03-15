@@ -12,6 +12,34 @@ exports.getAccounts = async (req, res) => {
         const end = new Date(Date.UTC(year, month, 1));
 
         // =============================
+        // OPENING BALANCE CALCULATION
+        // =============================
+
+        const previousPayments = await Payment.aggregate([
+            { $match: { paidDate: { $lt: start } } },
+            { $group: { _id: null, total: { $sum: "$amount" } } }
+        ]);
+
+        const previousIncomes = await Income.aggregate([
+            { $match: { date: { $lt: start } } },
+            { $group: { _id: null, total: { $sum: "$amount" } } }
+        ]);
+
+        const previousExpenses = await Expense.aggregate([
+            { $match: { date: { $lt: start } } },
+            { $group: { _id: null, total: { $sum: "$amount" } } }
+        ]);
+
+        const totalPrevPayments = previousPayments[0]?.total || 0;
+        const totalPrevIncomes = previousIncomes[0]?.total || 0;
+        const totalPrevExpenses = previousExpenses[0]?.total || 0;
+
+        const openingBalance =
+            totalPrevPayments +
+            totalPrevIncomes -
+            totalPrevExpenses;
+
+        // =============================
         // FETCH DATA (FAST QUERIES)
         // =============================
 
@@ -125,7 +153,10 @@ exports.getAccounts = async (req, res) => {
         // RESPONSE
         // =============================
 
-        res.json({ transactions });
+        res.json({
+            openingBalance,
+            transactions
+        });
 
     } catch (error) {
 
