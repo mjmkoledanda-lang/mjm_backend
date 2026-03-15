@@ -23,7 +23,7 @@ router.post("/", async (req, res) => {
             receiptNo,
             name: req.body.name,
             description: req.body.description,
-            amount: req.body.amount,
+            amount: Number(req.body.amount),   // ✅ ensure number
             date: req.body.date || new Date(),
             familyId: req.body.familyId || null
         });
