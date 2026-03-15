@@ -8,7 +8,6 @@ const CustomPayment = require("../models/CustomPayment");
 // ==============================
 
 router.post("/", async (req, res) => {
-
     try {
 
         const lastPayment = await CustomPayment
@@ -18,16 +17,26 @@ router.post("/", async (req, res) => {
         let receiptNo = 1001;
 
         if (lastPayment && lastPayment.receiptNo) {
-            receiptNo = Number(lastPayment.receiptNo) + 1;
+            receiptNo = lastPayment.receiptNo + 1;
         }
 
         const payment = new CustomPayment({
             receiptNo,
+
+            // for family payments
+            familyId: req.body.familyId || null,
+            headTitle: req.body.headTitle || "",
+            headName: req.body.headName || "",
+
+            // for walk-in donors
             name: req.body.name || "",
-            description: req.body.description || "",
+
+            // payment type
+            type: req.body.type || req.body.description || "Other",
+
             amount: Number(req.body.amount),
-            date: req.body.date || new Date(),
-            familyId: req.body.familyId || null
+            date: req.body.date || new Date()
+
         });
 
         await payment.save();
@@ -43,7 +52,6 @@ router.post("/", async (req, res) => {
         });
 
     }
-
 });
 
 
