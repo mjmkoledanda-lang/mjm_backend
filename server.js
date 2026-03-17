@@ -4,58 +4,58 @@ const cors = require("cors");
 const connectDB = require("./config/db");
 const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
-const accountsRoutes = require("./routes/accountsRoutes");
 const path = require("path");
 
+// Connect Database
 connectDB();
 
 const app = express();
 
 // ===============================
-// 🔥 HELMET CONFIG
+// 🔐 HELMET CONFIG
 // ===============================
 app.use(
     helmet({
-        crossOriginResourcePolicy: false
+        crossOriginResourcePolicy: false,
     })
 );
 
 // ===============================
-// ✅ CORS CONFIG (FINAL FIX)
+// 🌐 CORS CONFIG (FIXED)
 // ===============================
 const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:3000",
-    "https://kmjm.vercel.app"
+    "https://mjmk.vercel.app", // ✅ FIXED DOMAIN
+    "https://kmjm.vercel.app", // ✅ FIXED DOMAIN
 ];
 
-app.use(cors({
-    origin: (origin, callback) => {
-        if (!origin) return callback(null, true);
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            // allow requests like Postman / mobile apps (no origin)
+            if (!origin) return callback(null, true);
 
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        } else {
-            console.error("❌ CORS Blocked:", origin);
-            return callback(new Error("Not allowed by CORS"));
-        }
-    },
-    credentials: true
-}));
-
-// ❌ REMOVE THIS (CAUSE OF CRASH)
-// app.options("*", cors());
+            if (allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            } else {
+                console.error("❌ CORS Blocked:", origin);
+                return callback(new Error("Not allowed by CORS"));
+            }
+        },
+        credentials: true,
+    })
+);
 
 // ===============================
-// ✅ BODY PARSERS
+// 📦 BODY PARSERS
 // ===============================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use(cookieParser());
 
 // ===============================
-// 🔥 STATIC FILES (UPLOADS FIX)
+// 📁 STATIC FILES (UPLOADS FIX)
 // ===============================
 app.use(
     "/uploads",
@@ -68,7 +68,7 @@ app.use(
 );
 
 // ===============================
-// ✅ ROUTES
+// 📡 ROUTES
 // ===============================
 app.use("/api/public", require("./routes/publicRoutes"));
 app.use("/api/posts", require("./routes/postRoutes"));
@@ -77,17 +77,17 @@ app.use("/api/families", require("./routes/familyRoutes"));
 app.use("/api/members", require("./routes/memberRoutes"));
 app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
-app.use("/api/accounts", accountsRoutes);
+app.use("/api/accounts", require("./routes/accountsRoutes"));
 app.use("/api/income", require("./routes/incomeRoutes"));
 app.use("/api/expense", require("./routes/expenseRoutes"));
 app.use("/api/custom-payments", require("./routes/customPaymentRoutes"));
 app.use("/api/sms", require("./routes/smsRoutes"));
 
 // ===============================
-// ✅ TEST ROUTE
+// 🧪 TEST ROUTE
 // ===============================
 app.get("/", (req, res) => {
-    res.send("API Running...");
+    res.send("✅ API Running...");
 });
 
 // ===============================
@@ -99,13 +99,13 @@ app.use((err, req, res, next) => {
     if (err.message === "Not allowed by CORS") {
         return res.status(403).json({
             success: false,
-            message: "CORS Error: Origin not allowed"
+            message: "CORS Error: Origin not allowed",
         });
     }
 
     res.status(500).json({
         success: false,
-        message: "Server Error"
+        message: "Server Error",
     });
 });
 
