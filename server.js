@@ -12,24 +12,42 @@ connectDB();
 const app = express();
 
 // ===============================
-// 🔥 HELMET FIX (VERY IMPORTANT)
+// 🔥 HELMET CONFIG
 // ===============================
 app.use(
     helmet({
-        crossOriginResourcePolicy: false // ✅ FIX IMAGE BLOCK
+        crossOriginResourcePolicy: false
     })
 );
 
 // ===============================
-// ✅ CORS
+// ✅ CORS CONFIG (FULL FIX)
 // ===============================
+const allowedOrigins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://kmjm.vercel.app" // ✅ your frontend (IMPORTANT)
+];
+
 app.use(cors({
-    origin: [
-        "http://localhost:5173",
-        "http://localhost:3000"
-    ],
-    credentials: true
+    origin: function (origin, callback) {
+        // Allow requests without origin (Postman, mobile apps)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        } else {
+            console.error("❌ CORS Blocked:", origin);
+            return callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+// ✅ Handle preflight requests (CRITICAL FIX)
+app.options("*", cors());
 
 // ===============================
 // ✅ BODY PARSERS
@@ -40,20 +58,23 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // ===============================
-// 🔥 STATIC UPLOADS (FIXED)
+// 🔥 STATIC FILES (UPLOADS FIX)
 // ===============================
-app.use("/uploads", (req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Cross-Origin-Resource-Policy", "cross-origin"); // 🔥 CRITICAL
-    next();
-}, express.static(path.join(__dirname, "uploads")));
+app.use(
+    "/uploads",
+    (req, res, next) => {
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Cross-Origin-Resource-Policy", "cross-origin");
+        next();
+    },
+    express.static(path.join(__dirname, "uploads"))
+);
 
 // ===============================
 // ✅ ROUTES
 // ===============================
 app.use("/api/public", require("./routes/publicRoutes"));
 app.use("/api/posts", require("./routes/postRoutes"));
-
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/families", require("./routes/familyRoutes"));
 app.use("/api/members", require("./routes/memberRoutes"));
@@ -66,17 +87,36 @@ app.use("/api/custom-payments", require("./routes/customPaymentRoutes"));
 app.use("/api/sms", require("./routes/smsRoutes"));
 
 // ===============================
-// TEST ROUTE
+// ✅ TEST ROUTE
 // ===============================
 app.get("/", (req, res) => {
     res.send("API Running...");
 });
 
 // ===============================
-// START SERVER
+// ❌ GLOBAL ERROR HANDLER (GOOD PRACTICE)
+// ===============================
+app.use((err, req, res, next) => {
+    console.error("🔥 Error:", err.message);
+
+    if (err.message === "Not allowed by CORS") {
+        return res.status(403).json({
+            success: false,
+            message: "CORS Error: Origin not allowed"
+        });
+    }
+
+    res.status(500).json({
+        success: false,
+        message: "Server Error"
+    });
+});
+
+// ===============================
+// 🚀 START SERVER
 // ===============================
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`🚀 Server running on port ${PORT}`);
 });
