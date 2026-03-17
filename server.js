@@ -5,35 +5,54 @@ const connectDB = require("./config/db");
 const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const accountsRoutes = require("./routes/accountsRoutes");
+const path = require("path");
 
 connectDB();
 
 const app = express();
 
 // ===============================
-// GLOBAL MIDDLEWARE (TOP)
+// 🔥 HELMET FIX (VERY IMPORTANT)
 // ===============================
+app.use(
+    helmet({
+        crossOriginResourcePolicy: false // ✅ FIX IMAGE BLOCK
+    })
+);
 
+// ===============================
+// ✅ CORS
+// ===============================
 app.use(cors({
-    origin: true,       // reflect request origin automatically
+    origin: [
+        "http://localhost:5173",
+        "http://localhost:3000"
+    ],
     credentials: true
 }));
 
+// ===============================
+// ✅ BODY PARSERS
+// ===============================
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.use(cookieParser());
-app.use(helmet());
 
 // ===============================
-// TEST ROUTE
+// 🔥 STATIC UPLOADS (FIXED)
 // ===============================
+app.use("/uploads", (req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Cross-Origin-Resource-Policy", "cross-origin"); // 🔥 CRITICAL
+    next();
+}, express.static(path.join(__dirname, "uploads")));
 
-app.get("/", (req, res) => {
-    res.send("API Running...");
-});
-
 // ===============================
-// ROUTES
+// ✅ ROUTES
 // ===============================
+app.use("/api/public", require("./routes/publicRoutes"));
+app.use("/api/posts", require("./routes/postRoutes"));
 
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/families", require("./routes/familyRoutes"));
@@ -47,9 +66,15 @@ app.use("/api/custom-payments", require("./routes/customPaymentRoutes"));
 app.use("/api/sms", require("./routes/smsRoutes"));
 
 // ===============================
-// START SERVER (LAST LINE ONLY)
+// TEST ROUTE
 // ===============================
+app.get("/", (req, res) => {
+    res.send("API Running...");
+});
 
+// ===============================
+// START SERVER
+// ===============================
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
