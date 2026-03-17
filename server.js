@@ -21,17 +21,16 @@ app.use(
 );
 
 // ===============================
-// ✅ CORS CONFIG (FULL FIX)
+// ✅ CORS CONFIG (FINAL FIX)
 // ===============================
 const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:3000",
-    "https://kmjm.vercel.app" // ✅ your frontend (IMPORTANT)
+    "https://kmjm.vercel.app"
 ];
 
 app.use(cors({
-    origin: function (origin, callback) {
-        // Allow requests without origin (Postman, mobile apps)
+    origin: (origin, callback) => {
         if (!origin) return callback(null, true);
 
         if (allowedOrigins.includes(origin)) {
@@ -41,13 +40,11 @@ app.use(cors({
             return callback(new Error("Not allowed by CORS"));
         }
     },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+    credentials: true
 }));
 
-// ✅ Handle preflight requests (CRITICAL FIX)
-app.options("*", cors());
+// ❌ REMOVE THIS (CAUSE OF CRASH)
+// app.options("*", cors());
 
 // ===============================
 // ✅ BODY PARSERS
@@ -94,7 +91,7 @@ app.get("/", (req, res) => {
 });
 
 // ===============================
-// ❌ GLOBAL ERROR HANDLER (GOOD PRACTICE)
+// ❌ GLOBAL ERROR HANDLER
 // ===============================
 app.use((err, req, res, next) => {
     console.error("🔥 Error:", err.message);
