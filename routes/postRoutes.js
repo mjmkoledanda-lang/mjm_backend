@@ -1,7 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const Post = require("../models/Post");
-const upload = require("../middleware/upload");
+
+// ✅ NEW: Cloudinary upload
+const upload = require("../config/multerCloudinary");
+
 
 // ============================
 // CREATE POST (ADMIN)
@@ -11,23 +14,25 @@ router.post("/", upload.array("images", 5), async (req, res) => {
 
         console.log("FILES:", req.files);
 
-        const imagePaths = req.files
-            ? req.files.map(file => `/uploads/${file.filename}`)
+        // ✅ Cloudinary URLs (IMPORTANT CHANGE)
+        const imageUrls = req.files
+            ? req.files.map(file => file.path)
             : [];
 
         const post = await Post.create({
             title: req.body.title,
             content: req.body.content,
-            images: imagePaths
+            images: imageUrls
         });
 
         res.json(post);
 
     } catch (err) {
-        console.error(err);
+        console.error("CREATE POST ERROR:", err);
         res.status(500).json({ message: err.message });
     }
 });
+
 
 // ============================
 // GET ALL POSTS (PUBLIC)
@@ -41,5 +46,6 @@ router.get("/public", async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
+
 
 module.exports = router;
