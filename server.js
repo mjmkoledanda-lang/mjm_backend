@@ -1,5 +1,6 @@
-import dotenv from "dotenv";
+const dotenv = require("dotenv");
 dotenv.config();
+
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
@@ -7,13 +8,15 @@ const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const path = require("path");
 
-// Connect Database
+// ===============================
+// CONNECT DATABASE
+// ===============================
 connectDB();
 
 const app = express();
 
 // ===============================
-// 🔐 HELMET CONFIG
+// 🔐 HELMET
 // ===============================
 app.use(
     helmet({
@@ -22,19 +25,18 @@ app.use(
 );
 
 // ===============================
-// 🌐 CORS CONFIG (FIXED)
+// 🌐 CORS CONFIG
 // ===============================
 const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:3000",
-    "https://mjmk.vercel.app", // ✅ FIXED DOMAIN
-    "https://kmjm.vercel.app", // ✅ FIXED DOMAIN
+    "https://mjmk.vercel.app",
+    "https://kmjm.vercel.app",
 ];
 
 app.use(
     cors({
         origin: (origin, callback) => {
-            // allow requests like Postman / mobile apps (no origin)
             if (!origin) return callback(null, true);
 
             if (allowedOrigins.includes(origin)) {
@@ -56,7 +58,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // ===============================
-// 📁 STATIC FILES (UPLOADS FIX)
+// 📁 STATIC FILES
 // ===============================
 app.use(
     "/uploads",
@@ -95,7 +97,7 @@ app.get("/", (req, res) => {
 // ❌ GLOBAL ERROR HANDLER
 // ===============================
 app.use((err, req, res, next) => {
-    console.error("🔥 Error:", err.message);
+    console.error("🔥 Error:", err);
 
     if (err.message === "Not allowed by CORS") {
         return res.status(403).json({
@@ -106,7 +108,7 @@ app.use((err, req, res, next) => {
 
     res.status(500).json({
         success: false,
-        message: "Server Error",
+        message: err.message || "Server Error",
     });
 });
 
