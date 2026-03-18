@@ -98,6 +98,7 @@ router.get("/summary/:familyCode/:year", async (req, res) => {
         const arrears = unpaidMonths * monthlyAmount;
 
         res.json({
+            headTitle: family.headTitle,
             headName: family.headName,
             familyId: family.familyId,
             monthlyAmount,
