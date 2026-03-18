@@ -1,55 +1,54 @@
-import nodemailer from "nodemailer";
+const { Resend } = require("resend");
 
-export const sendContactEmail = async (req, res) => {
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+exports.sendContactEmail = async (req, res) => {
     try {
         const { name, email, subject, message } = req.body;
 
-        // ✅ Validation
+        // Validation
         if (!name || !email || !message) {
             return res.status(400).json({
                 success: false,
-                message: "All fields are required"
+                message: "All fields are required",
             });
         }
 
-        // ✅ Transporter (FIXED)
-        const transporter = nodemailer.createTransport({
-            host: "smtp.gmail.com",
-            port: 587,
-            secure: false,
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
+        console.log("📨 Sending email via Resend...");
 
-        const mailOptions = {
-            from: `"Website Contact" <${process.env.EMAIL_USER}>`,
-            replyTo: email, // ✅ important
-            to: process.env.EMAIL_USER,
+        const response = await resend.emails.send({
+            from: "Mosque Contact <onboarding@resend.dev>", // default allowed sender
+            to: ["mjm.koledanda@gmail.com"],
             subject: subject || "New Contact Message",
             html: `
-                <h2>New Contact Message</h2>
-                <p><b>Name:</b> ${name}</p>
-                <p><b>Email:</b> ${email}</p>
-                <p><b>Subject:</b> ${subject || "N/A"}</p>
-                <p><b>Message:</b><br/>${message}</p>
-            `
-        };
+                <div style="font-family:Arial;padding:20px">
+                    <h2>📩 New Contact Message</h2>
 
-        await transporter.sendMail(mailOptions);
+                    <p><strong>Name:</strong> ${name}</p>
+                    <p><strong>Email:</strong> ${email}</p>
+                    <p><strong>Subject:</strong> ${subject || "N/A"}</p>
 
-        res.status(200).json({
+                    <hr/>
+
+                    <p><strong>Message:</strong></p>
+                    <p>${message}</p>
+                </div>
+            `,
+        });
+
+        console.log("✅ Email sent:", response);
+
+        res.json({
             success: true,
-            message: "Email sent successfully"
+            message: "Email sent successfully",
         });
 
     } catch (error) {
-        console.error("EMAIL ERROR:", error);
+        console.error("❌ RESEND ERROR:", error);
 
         res.status(500).json({
             success: false,
-            message: error.message || "Failed to send email"
+            message: error.message,
         });
     }
 };
