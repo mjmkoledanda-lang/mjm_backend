@@ -34,6 +34,7 @@ const allowedOrigins = [
     "https://kmjm.vercel.app",
     "https://mjmk.lk",
     "https://www.mjmk.lk",
+    "https://admin.mjmk.lk",
 ];
 
 app.use(
