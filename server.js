@@ -49,9 +49,11 @@ app.use(
             }
         },
         credentials: true,
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // ✅ important
+        allowedHeaders: ["Content-Type", "Authorization"],   // ✅ important
     })
 );
-app.options("/*", cors()); // ✅ correct
+
 // ===============================
 // 📦 BODY PARSERS
 // ===============================
