@@ -51,7 +51,7 @@ app.use(
         credentials: true,
     })
 );
-app.options("*", cors());
+app.options("/*", cors()); // ✅ correct
 // ===============================
 // 📦 BODY PARSERS
 // ===============================
