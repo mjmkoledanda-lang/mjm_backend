@@ -7,15 +7,21 @@ const sendSMS = require("../utils/sendSMS");
 // ================================
 exports.markPayment = async (req, res) => {
     try {
-        const { family, year, month } = req.body;
+        const { nic, year, month } = req.body;
 
-        if (!family || !year || !month) {
+        if (!nic || !year || !month) {
             return res.status(400).json({
-                message: "All fields are required"
+                message: "NIC, year and month are required"
             });
         }
 
-        const familyData = await Family.findById(family);
+        // ✅ Normalize NIC
+        const cleanNIC = nic.trim().toUpperCase();
+
+        // 🔥 Find family using NIC (robust search)
+        const familyData = await Family.findOne({
+            nic: { $regex: `^${cleanNIC}$`, $options: "i" }
+        });
 
         if (!familyData) {
             return res.status(404).json({ message: "Family not found" });
@@ -26,7 +32,7 @@ exports.markPayment = async (req, res) => {
         const amountNum = Number(familyData.monthlyAmount || 0);
 
         let payment = await Payment.findOne({
-            family,
+            family: familyData._id,
             year: yearNum,
             month: monthNum
         });
@@ -37,7 +43,7 @@ exports.markPayment = async (req, res) => {
             await payment.save();
         } else {
             payment = await Payment.create({
-                family,
+                family: familyData._id,
                 year: yearNum,
                 month: monthNum,
                 amount: amountNum,
@@ -209,7 +215,15 @@ exports.getPaymentSummary = async (req, res) => {
     try {
         const { familyId } = req.params;
 
-        const family = await Family.findOne({ familyId });
+        // 🔥 Treat param as NIC
+        const value = familyId.trim().toUpperCase();
+
+        const family = await Family.findOne({
+            $or: [
+                { familyId: value }, // supports old Family ID
+                { nic: { $regex: `^${value}$`, $options: "i" } } // supports NIC
+            ]
+        });
 
         if (!family) {
             return res.status(404).json({ message: "Family not found" });
@@ -217,7 +231,7 @@ exports.getPaymentSummary = async (req, res) => {
 
         const payments = await Payment.find({
             family: family._id
-        }).sort({ year: -1, month: -1 }); // fixed
+        }).sort({ year: -1, month: -1 });
 
         const START_YEAR = 2020;
         const START_MONTH = 1;

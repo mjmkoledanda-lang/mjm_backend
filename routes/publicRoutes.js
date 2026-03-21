@@ -12,7 +12,13 @@ router.get("/summary/:familyCode/:year", async (req, res) => {
     try {
         const { familyCode, year } = req.params;
 
-        const family = await Family.findOne({ familyId: familyCode });
+        const value = familyCode.trim().toUpperCase();
+
+        const cleanNIC = familyCode.trim().toUpperCase();
+
+        const family = await Family.findOne({
+            nic: cleanNIC
+        });
 
         if (!family) {
             return res.status(404).json({ message: "Invalid Family ID" });
