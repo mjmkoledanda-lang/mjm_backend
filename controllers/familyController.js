@@ -165,13 +165,22 @@ exports.getAllFamilies = async (req, res) => {
 // ============================
 exports.searchFamilies = async (req, res) => {
     try {
-
         const keyword = req.params.keyword;
 
-        const familiesByHead = await Family.find({
-            headName: { $regex: keyword, $options: "i" }
+        // ✅ Search by Family ID
+        const familiesById = await Family.find({
+            familyId: { $regex: keyword, $options: "i" }
         });
 
+        // ✅ Search by Head Name (better matching)
+        const familiesByHead = await Family.find({
+            headName: {
+                $regex: `\\b${keyword}`,
+                $options: "i"
+            }
+        });
+
+        // ✅ Search by Member Register Number
         const members = await Member.find({
             registerNumber: { $regex: keyword, $options: "i" }
         });
@@ -182,11 +191,14 @@ exports.searchFamilies = async (req, res) => {
             _id: { $in: familyIdsFromMembers }
         });
 
+        // ✅ Merge all results
         const allFamilies = [
+            ...familiesById,
             ...familiesByHead,
             ...familiesByRegister
         ];
 
+        // ✅ Remove duplicates
         const uniqueFamilies = Array.from(
             new Map(
                 allFamilies.map(f => [f._id.toString(), f])
