@@ -7,21 +7,29 @@ const sendSMS = require("../utils/sendSMS");
 // ================================
 exports.markPayment = async (req, res) => {
     try {
-        const { nic, year, month } = req.body;
+        const { nic, family, year, month } = req.body;
 
-        if (!nic || !year || !month) {
+        if ((!nic && !family) || !year || !month) {
             return res.status(400).json({
-                message: "NIC, year and month are required"
+                message: "NIC or Family, year and month are required"
             });
         }
 
-        // ✅ Normalize NIC
-        const cleanNIC = nic.trim().toUpperCase();
+        let familyData;
 
-        // 🔥 Find family using NIC (robust search)
-        const familyData = await Family.findOne({
-            nic: { $regex: `^${cleanNIC}$`, $options: "i" }
-        });
+        // 🔥 NIC (public)
+        if (nic) {
+            const cleanNIC = nic.trim().toUpperCase();
+
+            familyData = await Family.findOne({
+                nic: { $regex: `^${cleanNIC}$`, $options: "i" }
+            });
+        }
+
+        // 🔥 ObjectId (admin)
+        if (!familyData && family) {
+            familyData = await Family.findById(family);
+        }
 
         if (!familyData) {
             return res.status(404).json({ message: "Family not found" });
