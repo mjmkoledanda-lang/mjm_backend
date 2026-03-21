@@ -7,26 +7,23 @@ const sendSMS = require("../utils/sendSMS");
 // ================================
 exports.markPayment = async (req, res) => {
     try {
-        const { nic, family, year, month } = req.body;
+        const { nic, family, year, months } = req.body;
 
-        if ((!nic && !family) || !year || !month) {
+        if ((!nic && !family) || !year || !months?.length) {
             return res.status(400).json({
-                message: "NIC or Family, year and month are required"
+                message: "NIC/Family, year and months required"
             });
         }
 
         let familyData;
 
-        // 🔥 NIC (public)
         if (nic) {
             const cleanNIC = nic.trim().toUpperCase();
-
             familyData = await Family.findOne({
                 nic: { $regex: `^${cleanNIC}$`, $options: "i" }
             });
         }
 
-        // 🔥 ObjectId (admin)
         if (!familyData && family) {
             familyData = await Family.findById(family);
         }
@@ -36,31 +33,35 @@ exports.markPayment = async (req, res) => {
         }
 
         const yearNum = Number(year);
-        const monthNum = Number(month);
         const amountNum = Number(familyData.monthlyAmount || 0);
 
-        let payment = await Payment.findOne({
-            family: familyData._id,
-            year: yearNum,
-            month: monthNum
-        });
+        const results = [];
 
-        if (payment) {
-            payment.paidDate = new Date();
-            payment.amount = amountNum;
-            await payment.save();
-        } else {
-            payment = await Payment.create({
+        for (const m of months) {
+            const monthNum = Number(m);
+
+            // 🔥 PREVENT DUPLICATE
+            let payment = await Payment.findOne({
                 family: familyData._id,
                 year: yearNum,
-                month: monthNum,
-                amount: amountNum,
-                paidDate: new Date(),
-                receiptPrinted: false
+                month: monthNum
             });
+
+            if (!payment) {
+                payment = await Payment.create({
+                    family: familyData._id,
+                    year: yearNum,
+                    month: monthNum,
+                    amount: amountNum,
+                    paidDate: new Date(),
+                    receiptPrinted: false
+                });
+            }
+
+            results.push(payment);
         }
 
-        res.status(200).json(payment);
+        res.json(results);
 
     } catch (error) {
         console.error("MARK PAYMENT ERROR:", error);
