@@ -132,11 +132,8 @@ router.get("/posts", async (req, res) => {
 // ============================
 router.get("/latest-notice", async (req, res) => {
     try {
-        const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
         const latest = await Post.findOne({
-            type: { $in: ["notice", "information"] }, // ✅ FIX HERE
-            createdAt: { $gte: last24h }
+            type: { $in: ["notice", "information"] } // ✅ CRITICAL FIX
         }).sort({ createdAt: -1 });
 
         res.json(latest);
