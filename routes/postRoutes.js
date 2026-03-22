@@ -133,7 +133,7 @@ router.get("/posts", async (req, res) => {
 router.get("/latest-notice", async (req, res) => {
     try {
         const latest = await Post.findOne({
-            type: { $in: ["notice", "information"] } // ✅ CRITICAL FIX
+            type: { $in: ["notice", "post"] } // ✅ CRITICAL FIX
         }).sort({ createdAt: -1 });
 
         res.json(latest);
