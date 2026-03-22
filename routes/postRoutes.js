@@ -127,18 +127,21 @@ router.get("/posts", async (req, res) => {
 // ============================
 // GET LATEST NOTICE (LAST 24H)
 // ============================
+// ============================
+// GET LATEST NOTICE OR INFO
+// ============================
 router.get("/latest-notice", async (req, res) => {
     try {
         const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-        const latestNotice = await Post.findOne({
-            type: "notice",
+        const latest = await Post.findOne({
+            type: { $in: ["notice", "information"] }, // ✅ FIX HERE
             createdAt: { $gte: last24h }
         }).sort({ createdAt: -1 });
 
-        res.json(latestNotice); // can be null if no recent notice
+        res.json(latest);
     } catch (err) {
-        console.error("LATEST NOTICE ERROR:", err);
+        console.error("LATEST ERROR:", err);
         res.status(500).json({ message: err.message });
     }
 });
