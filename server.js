@@ -27,10 +27,6 @@ app.use(
 // 🌐 CORS CONFIG
 // ===============================
 const allowedOrigins = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "https://mjmk.vercel.app",
-    "https://kmjm.vercel.app",
     "https://mjmk.lk",
     "https://www.mjmk.lk",
     "https://admin.mjmk.lk",
