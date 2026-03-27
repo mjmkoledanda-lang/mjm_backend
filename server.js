@@ -7,6 +7,14 @@ const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const path = require("path");
 
+
+app.get("/api/health", (req, res) => {
+    res.status(200).json({
+        status: "OK",
+        message: "Server is running"
+    });
+});
+
 // ===============================
 // CONNECT DATABASE
 // ===============================
