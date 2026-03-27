@@ -417,7 +417,15 @@ exports.getTotalArrearsAllFamilies = async (req, res) => {
                     totalPaid: {
                         $sum: {
                             $map: {
-                                input: "$payments",
+                                input: {
+                                    $filter: {
+                                        input: "$payments",
+                                        as: "p",
+                                        cond: {
+                                            $gte: ["$$p.year", 2020]
+                                        }
+                                    }
+                                },
                                 as: "p",
                                 in: { $ifNull: ["$$p.amount", 0] }
                             }
