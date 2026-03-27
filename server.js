@@ -6,7 +6,7 @@ const connectDB = require("./config/db");
 const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const path = require("path");
-
+const app = express();
 
 app.get("/api/health", (req, res) => {
     res.status(200).json({
@@ -20,7 +20,7 @@ app.get("/api/health", (req, res) => {
 // ===============================
 connectDB();
 
-const app = express();
+
 
 // ===============================
 // 🔐 HELMET
