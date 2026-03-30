@@ -38,6 +38,11 @@ const allowedOrigins = [
     "https://mjmk.lk",
     "https://www.mjmk.lk",
     "https://admin.mjmk.lk",
+
+    // Local development
+    "http://localhost:3000",
+    "http://localhost:5173",
+
 ];
 
 app.use(
