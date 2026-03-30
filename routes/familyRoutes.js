@@ -34,8 +34,11 @@ const { getHeadStats } = require("../controllers/statsController");
 router.get("/stats/full", protect, getFullStats);
 router.get("/stats/head", protect, getHeadStats);
 
+router.get("/public/stats", getFullStats);
 // 🔥 VERY IMPORTANT — PLACE THIS BEFORE /:id
 router.get("/last", protect, getLastFamily);
+
+
 
 
 
