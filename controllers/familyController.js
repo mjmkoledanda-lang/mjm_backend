@@ -1,9 +1,22 @@
 const Family = require("../models/Family");
 const Member = require("../models/Member");
+const QRCode = require("qrcode");
+const { v4: uuidv4 } = require("uuid");
+
+
 
 // ============================
 // CREATE FAMILY
 // ============================
+
+
+
+
+
+// ============================
+// CREATE FAMILY
+// ============================
+
 exports.createFamily = async (req, res) => {
     try {
 
@@ -16,10 +29,12 @@ exports.createFamily = async (req, res) => {
             ...rest
         } = req.body;
 
-        // Remove empty enum values
-        if (rest.headMaritalStatus === "") delete rest.headMaritalStatus;
+        // remove empty enum
+        if (rest.headMaritalStatus === "") {
+            delete rest.headMaritalStatus;
+        }
 
-        // Check duplicate family ID
+        // check duplicate familyId
         const existing = await Family.findOne({ familyId });
 
         if (existing) {
@@ -28,30 +43,64 @@ exports.createFamily = async (req, res) => {
             });
         }
 
+        // ============================
+        // Disability logic
+        // ============================
+
         const finalHeadDisability =
             headDisabilityType === "OTHER"
                 ? headDisabilityDetails
                 : headDisabilityType;
 
+        // ============================
+        // QR Generation
+        // ============================
+
+        const qrId = uuidv4();
+
+        const qrData = `https://mjmk.lk/scan/${qrId}`;
+
+        const qrImage = await QRCode.toDataURL(qrData);
+
+        // ============================
+        // Create Family
+        // ============================
+
         const family = await Family.create({
+
             familyId,
+
             ...rest,
 
             headDateOfBirth: rest.headDateOfBirth || null,
 
             headDisability: headDisability || false,
 
+            headDisabilityType: headDisabilityType || "",
+
             headDisabilityDetails: headDisability
                 ? finalHeadDisability
                 : "",
 
-            manualArrears: manualArrears || 0
+            manualArrears: manualArrears || 0,
+
+            qrId: qrId,
+
+            qrCode: qrImage
         });
 
-        res.status(201).json(family);
+        res.status(201).json({
+            success: true,
+            message: "Family created with QR",
+            data: family
+        });
 
     } catch (error) {
-        res.status(400).json({
+
+        console.error("Create Family Error:", error);
+
+        res.status(500).json({
+            success: false,
             message: error.message
         });
     }
@@ -77,6 +126,23 @@ exports.getFamilyById = async (req, res) => {
             family: family._id
         });
 
+
+        // ✅ Generate QR if not already saved
+        if (!family.qrCode) {
+
+            const qrId = family.qrId || uuidv4();
+
+            const qrData = `https://mjmk.lk/scan/${qrId}`;
+
+            const qrImage = await QRCode.toDataURL(qrData);
+
+            family.qrId = qrId;
+            family.qrCode = qrImage;
+
+            await family.save();
+        }
+
+
         res.json({
             family,
             members
@@ -92,71 +158,65 @@ exports.getFamilyById = async (req, res) => {
 // ============================
 // GET ALL FAMILIES
 // ============================
+
+
 exports.getAllFamilies = async (req, res) => {
     try {
+        const families = await Family.find().sort({ familyId: 1 }).lean();
+        const members = await Member.find().select("family gender").lean();
 
-        // Get all families
-        const families = await Family.find()
-            .sort({ familyId: 1 })
-            .lean();
-
-        // Get all members
-        const members = await Member.find()
-            .select("family gender")
-            .lean();
-
-        // Create member lookup map
         const memberMap = {};
-
         members.forEach(m => {
-
             const famId = m.family.toString();
-
-            if (!memberMap[famId]) {
-                memberMap[famId] = { male: 0, female: 0 };
-            }
-
-            if (m.gender?.toUpperCase() === "MALE")
-                memberMap[famId].male++;
-
-            if (m.gender?.toUpperCase() === "FEMALE")
-                memberMap[famId].female++;
-
+            if (!memberMap[famId]) memberMap[famId] = { male: 0, female: 0 };
+            if (m.gender?.toUpperCase() === "MALE") memberMap[famId].male++;
+            if (m.gender?.toUpperCase() === "FEMALE") memberMap[famId].female++;
         });
 
-        const familiesWithStats = families.map(family => {
+        const familiesWithStats = await Promise.all(
+            families.map(async family => {
+                const stats = memberMap[family._id.toString()] || { male: 0, female: 0 };
+                let maleCount = stats.male;
+                let femaleCount = stats.female;
 
-            const stats = memberMap[family._id.toString()] || {
-                male: 0,
-                female: 0
-            };
+                if (family.headGender?.toUpperCase() === "MALE") maleCount++;
+                if (family.headGender?.toUpperCase() === "FEMALE") femaleCount++;
 
-            let maleCount = stats.male;
-            let femaleCount = stats.female;
+                // ✅ Generate QR if missing
+                if (!family.qrCode) {
+                    const qrId = family.qrId || uuidv4();
 
-            if (family.headGender?.toUpperCase() === "MALE")
-                maleCount++;
+                    const qrImage = await QRCode.toDataURL(
+                        `https://mjmk.lk/scan/${qrId}`
+                    );
 
-            if (family.headGender?.toUpperCase() === "FEMALE")
-                femaleCount++;
+                    family.qrId = qrId;
+                    family.qrCode = qrImage;
 
-            return {
-                ...family,
-                totalMembers: maleCount + femaleCount,
-                maleCount,
-                femaleCount
-            };
+                    await Family.findByIdAndUpdate(
+                        family._id,
+                        {
+                            qrId,
+                            qrCode: qrImage
+                        }
+                    );
+                    family.qrCode = qrImage;
+                    await Family.findByIdAndUpdate(family._id, { qrCode: qrImage });
+                }
 
-        });
+                return {
+                    ...family,
+                    totalMembers: maleCount + femaleCount,
+                    maleCount,
+                    femaleCount
+                };
+            })
+        );
 
         res.json(familiesWithStats);
 
     } catch (error) {
-
-        res.status(500).json({
-            message: error.message
-        });
-
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -223,6 +283,10 @@ exports.updateFamily = async (req, res) => {
         const updateData = { ...req.body };
 
         delete updateData._id;
+
+        // ❗ protect QR fields
+        delete updateData.qrId;
+        delete updateData.qrCode;
 
         if (updateData.headMaritalStatus === "")
             delete updateData.headMaritalStatus;

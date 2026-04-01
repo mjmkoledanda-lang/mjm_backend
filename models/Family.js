@@ -6,6 +6,7 @@ const familySchema = new mongoose.Schema({
         required: true,
         unique: true,
         trim: true
+
     },
 
 
@@ -43,6 +44,17 @@ const familySchema = new mongoose.Schema({
     address: String,
     addressOther: String,
     gsDivision: String,
+    qrCode: {
+        type: String
+    },
+
+    qrId: {
+        type: String,
+        unique: true,
+        sparse: true // ✅ Add this!
+    },
+
+
 
     manualArrears: {
         type: Number,

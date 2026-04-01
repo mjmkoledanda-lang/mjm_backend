@@ -98,6 +98,11 @@ app.use("/api/income", require("./routes/incomeRoutes"));
 app.use("/api/expense", require("./routes/expenseRoutes"));
 app.use("/api/custom-payments", require("./routes/customPaymentRoutes"));
 app.use("/api/sms", require("./routes/smsRoutes"));
+app.use("/api/qr", require("./routes/qrRoutes"));
+
+app.use("/api/qurban", require("./routes/qurbanRoutes"));
+
+app.use("/api/kanji", require("./routes/kanjiRoutes"));
 
 // ===============================
 // 🧪 TEST ROUTE
