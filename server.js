@@ -40,25 +40,25 @@ const allowedOrigins = [
     "https://admin.mjmk.lk",
     "http://localhost:3000",
     "http://localhost:5173",
-    "http://192.168.8.187:8081", // Add your Expo Dev server
-    "http://192.168.8.187:5000", // Add your Backend IP
 ];
 
 app.use(
     cors({
         origin: (origin, callback) => {
+
+            // allow mobile apps and postman
             if (!origin) return callback(null, true);
 
             if (allowedOrigins.includes(origin)) {
                 return callback(null, true);
-            } else {
-                console.error("❌ CORS Blocked:", origin);
-                return callback(new Error("Not allowed by CORS"));
             }
+
+            console.log("❌ CORS Blocked:", origin);
+            return callback(new Error("Not allowed by CORS"));
         },
         credentials: true,
-        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // ✅ important
-        allowedHeaders: ["Content-Type", "Authorization"],   // ✅ important
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
     })
 );
 
