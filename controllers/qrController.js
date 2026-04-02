@@ -63,7 +63,7 @@ const scanQR = async (req, res) => {
             data: {
                 family: {
                     _id: family._id,
-                    head: family.head,
+                    headName: family.headName, // ✅ ADD THIS
                     address: family.address,
                 },
             },
