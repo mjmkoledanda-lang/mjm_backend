@@ -1,15 +1,27 @@
-const router = require("express").Router();
-const { protect } = require("../middleware/authMiddleware");
-const { authorizeRoles } = require("../middleware/roleMiddleware");
-const { generateQR, generateAllQR, scanQR } = require("../controllers/qrController");
+const express = require("express");
+const router = express.Router();
 
-// Generate QR for one family (protected)
-router.post("/generate/:id", protect, authorizeRoles("superadmin", "admin"), generateQR);
+const {
+    generateQR,
+    generateAllQR,
+    scanQR,
+    getStatus,
+    markKanji,
+    markQurban,
+} = require("../controllers/qrController");
 
-// Generate QR for all families (protected)
-router.post("/generate-all", protect, authorizeRoles("superadmin", "admin"), generateAllQR);
+// QR
+router.get("/generate/:id", generateQR);
+router.get("/generate-all", generateAllQR);
 
-// Scan QR (public)
+// Scan
 router.get("/scan/:id", scanQR);
+
+// Status
+router.get("/status/:id", getStatus);
+
+// Mark actions
+router.put("/kanji/:id", markKanji);
+router.put("/qurban/:id", markQurban);
 
 module.exports = router;

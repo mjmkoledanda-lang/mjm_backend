@@ -111,6 +111,7 @@ app.use("/api/qr", require("./routes/qrRoutes"));
 app.use("/api/qurban", require("./routes/qurbanRoutes"));
 
 app.use("/api/kanji", require("./routes/kanjiRoutes"));
+app.use("/api/qr", require("./routes/qrRoutes"));
 
 // ===============================
 // 🧪 TEST ROUTE
