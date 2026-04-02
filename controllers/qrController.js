@@ -12,7 +12,7 @@ const generateQR = async (req, res) => {
             return res.status(404).json({ success: false, message: "Family not found" });
         }
 
-        const qrData = `https://mjmk.lk/scan/${family._id}`;
+        const qrData = `https://mjmk.lk/scan/${family.familyId}`;
         const qrImage = await QRCode.toDataURL(qrData);
 
         family.qrCode = qrImage;
@@ -52,25 +52,36 @@ const generateAllQR = async (req, res) => {
 // ===============================
 const scanQR = async (req, res) => {
     try {
-        const family = await Family.findById(req.params.id).select("_id head address");
+        const family = await Family.findOne({ familyId: req.params.id });
 
         if (!family) {
-            return res.status(404).json({ success: false, message: "Family not found" });
+            return res.status(404).json({
+                success: false,
+                message: "Family not found",
+            });
         }
+
+        // 🔥 DEBUG LOG
+        console.log("FOUND FAMILY:", family);
 
         res.json({
             success: true,
             data: {
                 family: {
                     _id: family._id,
-                    headName: family.headName, // ✅ ADD THIS
+                    familyId: family.familyId,
+                    headName: family.headName,
                     address: family.address,
                 },
             },
         });
 
     } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
+        console.log("SCAN ERROR:", err);
+        res.status(500).json({
+            success: false,
+            message: err.message,
+        });
     }
 };
 
