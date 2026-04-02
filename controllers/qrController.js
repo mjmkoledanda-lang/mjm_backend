@@ -33,11 +33,13 @@ const generateAllQR = async (req, res) => {
         const families = await Family.find();
 
         for (let fam of families) {
-            const qrData = `https://mjmk.lk/scan/${fam._id}`;
+            const qrData = `https://mjmk.lk/scan/${fam.familyId}`;
             const qrImage = await QRCode.toDataURL(qrData);
 
-            fam.qrCode = qrImage;
-            await fam.save();
+            await Family.updateOne(
+                { _id: fam._id },
+                { qrCode: qrImage }
+            );
         }
 
         res.json({ success: true, message: "All QR generated successfully" });
@@ -70,8 +72,10 @@ const scanQR = async (req, res) => {
                 family: {
                     _id: family._id,
                     familyId: family.familyId,
+                    headTitle: family.headTitle,
                     headName: family.headName,
                     address: family.address,
+                    totalMembers: family.totalMembers || 0, // ✅ ADD THIS
                 },
             },
         });
