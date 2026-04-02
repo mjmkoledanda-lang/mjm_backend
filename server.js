@@ -38,11 +38,10 @@ const allowedOrigins = [
     "https://mjmk.lk",
     "https://www.mjmk.lk",
     "https://admin.mjmk.lk",
-
-    // Local development
     "http://localhost:3000",
     "http://localhost:5173",
-
+    "http://192.168.8.187:8081", // Add your Expo Dev server
+    "http://192.168.8.187:5000", // Add your Backend IP
 ];
 
 app.use(
