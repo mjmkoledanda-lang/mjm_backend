@@ -52,6 +52,8 @@ const generateAllQR = async (req, res) => {
 // ===============================
 // 📱 SCAN QR
 // ===============================
+const Member = require("../models/Member");
+
 const scanQR = async (req, res) => {
     try {
         const family = await Family.findOne({ familyId: req.params.id });
@@ -63,8 +65,22 @@ const scanQR = async (req, res) => {
             });
         }
 
-        // 🔥 DEBUG LOG
-        console.log("FOUND FAMILY:", family);
+        // ✅ GET MEMBERS
+        const members = await Member.find({ family: family._id });
+
+        let maleCount = 0;
+        let femaleCount = 0;
+
+        members.forEach(m => {
+            if (m.gender?.toUpperCase() === "MALE") maleCount++;
+            if (m.gender?.toUpperCase() === "FEMALE") femaleCount++;
+        });
+
+        // ✅ ADD HEAD ALSO
+        if (family.headGender?.toUpperCase() === "MALE") maleCount++;
+        if (family.headGender?.toUpperCase() === "FEMALE") femaleCount++;
+
+        const totalMembers = maleCount + femaleCount;
 
         res.json({
             success: true,
@@ -75,7 +91,7 @@ const scanQR = async (req, res) => {
                     headTitle: family.headTitle,
                     headName: family.headName,
                     address: family.address,
-                    totalMembers: family.totalMembers || 0, // ✅ ADD THIS
+                    totalMembers: totalMembers, // ✅ FIXED
                 },
             },
         });
