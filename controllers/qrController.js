@@ -41,20 +41,30 @@ const generateAllQR = async (req, res) => {
 };
 
 // ===============================
-// 📱 SCAN QR (ONLY RETURN FAMILY ID, HEAD, ADDRESS)
+// 📱 SCAN QR (ONLY RETURN FAMILY ID, HEAD NAME, ADDRESS)
 // ===============================
 const scanQR = async (req, res) => {
     try {
-        const family = await Family.findById(req.params.id)
-            .populate("head", "name") // populate head and only get the name field
-            .select("_id head address"); // keep other fields you need
+        const family = await Family.findById(req.params.id).select("_id head address");
 
         if (!family)
             return res.status(404).json({ success: false, message: "Family not found" });
 
+        // If head is an ObjectId, you might need to fetch the member's name
+        let headName = family.head; // if stored as plain string
+        if (typeof family.head === "object" && family.head?.name) {
+            headName = family.head.name;
+        }
+
         res.json({
             success: true,
-            data: { family } // frontend expects res.data.data.family
+            data: {
+                family: {
+                    _id: family._id,
+                    headName: headName || "N/A",
+                    address: family.address || "N/A",
+                },
+            },
         });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
