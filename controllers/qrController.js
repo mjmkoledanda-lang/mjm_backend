@@ -45,7 +45,10 @@ const generateAllQR = async (req, res) => {
 // ===============================
 const scanQR = async (req, res) => {
     try {
-        const family = await Family.findById(req.params.id).select("_id head address");
+        const family = await Family.findById(req.params.id)
+            .populate("head", "name") // populate head and only get the name field
+            .select("_id head address"); // keep other fields you need
+
         if (!family)
             return res.status(404).json({ success: false, message: "Family not found" });
 
