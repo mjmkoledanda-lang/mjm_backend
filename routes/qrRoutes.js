@@ -5,7 +5,8 @@ const { authorizeRoles } = require("../middleware/roleMiddleware");
 
 const {
     generateQR,
-    generateAllQR
+    generateAllQR,
+    scanQR
 } = require("../controllers/qrController");
 
 router.post(
@@ -21,5 +22,7 @@ router.post(
     authorizeRoles("superadmin", "admin"),
     generateAllQR
 );
+
+router.get("/scan/:id", scanQR);
 
 module.exports = router;
