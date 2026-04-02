@@ -45,16 +45,13 @@ const generateAllQR = async (req, res) => {
 // ===============================
 const scanQR = async (req, res) => {
     try {
-        const family = await Family.findById(req.params.id)
-            .select("_id head address")       // select only the fields you need
-            .populate("head", "name");       // populate head to get the name
-
+        const family = await Family.findById(req.params.id).select("_id head address");
         if (!family)
             return res.status(404).json({ success: false, message: "Family not found" });
 
         res.json({
             success: true,
-            data: { family }
+            data: { family } // frontend expects res.data.data.family
         });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
