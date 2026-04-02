@@ -1,11 +1,14 @@
 const QRCode = require("qrcode");
 const Family = require("../models/Family");
 
-// Generate QR for one family
+// ===============================
+// 🔳 GENERATE QR FOR ONE FAMILY
+// ===============================
 const generateQR = async (req, res) => {
     try {
         const family = await Family.findById(req.params.id);
-        if (!family) return res.status(404).json({ success: false, message: "Family not found" });
+        if (!family)
+            return res.status(404).json({ success: false, message: "Family not found" });
 
         const qrData = `https://mjmk.lk/scan/${family._id}`;
         const qrImage = await QRCode.toDataURL(qrData);
@@ -19,7 +22,9 @@ const generateQR = async (req, res) => {
     }
 };
 
-// Generate QR for all families
+// ===============================
+// 🔳 GENERATE QR FOR ALL FAMILIES
+// ===============================
 const generateAllQR = async (req, res) => {
     try {
         const families = await Family.find();
@@ -35,13 +40,19 @@ const generateAllQR = async (req, res) => {
     }
 };
 
-// Scan QR (only return family ID and head)
+// ===============================
+// 📱 SCAN QR (ONLY RETURN FAMILY ID, HEAD, ADDRESS)
+// ===============================
 const scanQR = async (req, res) => {
     try {
-        const family = await Family.findById(req.params.id).select("_id head");
-        if (!family) return res.status(404).json({ success: false, message: "Family not found" });
+        const family = await Family.findById(req.params.id).select("_id head address");
+        if (!family)
+            return res.status(404).json({ success: false, message: "Family not found" });
 
-        res.json({ success: true, data: family });
+        res.json({
+            success: true,
+            data: { family } // frontend expects res.data.data.family
+        });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
