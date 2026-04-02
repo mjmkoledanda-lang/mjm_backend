@@ -34,22 +34,31 @@ app.use(
 // ===============================
 // 🌐 CORS CONFIG
 // ===============================
+// ===============================
+// 🌐 CORS CONFIG
+// ===============================
 const allowedOrigins = [
     "https://mjmk.lk",
     "https://www.mjmk.lk",
     "https://admin.mjmk.lk",
     "http://localhost:3000",
     "http://localhost:5173",
+    "http://192.168.8.187:8081",
+    "exp://192.168.8.187:8081"
 ];
 
 app.use(
     cors({
         origin: (origin, callback) => {
 
-            // allow mobile apps and postman
+            // allow mobile apps, expo, postman
             if (!origin) return callback(null, true);
 
-            if (allowedOrigins.includes(origin)) {
+            if (
+                allowedOrigins.includes(origin) ||
+                origin.startsWith("exp://") ||
+                origin.startsWith("http://192.168.")
+            ) {
                 return callback(null, true);
             }
 

@@ -4,6 +4,7 @@ const router = express.Router();
 const Family = require("../models/Family");
 const Payment = require("../models/Payment");
 const { sendContactEmail } = require("../controllers/contactController");
+const {getQRByNIC} = require("../controllers/publicController");
 
 // ===============================
 // SUMMARY ROUTE
@@ -131,4 +132,6 @@ router.get("/summary/:familyCode/:year", async (req, res) => {
 // ===============================
 router.post("/contact", sendContactEmail);
 
+
+router.get("/qr-by-nic/:nic", getQRByNIC);
 module.exports = router;
