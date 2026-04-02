@@ -1,34 +1,50 @@
+const QRCode = require("qrcode");
 const Family = require("../models/Family");
 
-// ===============================
-// 📱 SCAN QR
-// ===============================
-exports.scanQR = async (req, res) => {
+// Generate QR for one family
+const generateQR = async (req, res) => {
     try {
-        const { id } = req.params;
+        const family = await Family.findById(req.params.id);
+        if (!family) return res.status(404).json({ success: false, message: "Family not found" });
 
-        // Find the family and populate only the head
-        const family = await Family.findById(id).populate("head", "name"); // populate only name of head
+        const qrData = `https://mjmk.lk/scan/${family._id}`;
+        const qrImage = await QRCode.toDataURL(qrData);
 
-        if (!family) {
-            return res.status(404).json({
-                success: false,
-                message: "Family not found"
-            });
-        }
+        family.qrCode = qrImage;
+        await family.save();
 
-        res.json({
-            success: true,
-            data: {
-                id: family._id,
-                head: family.head?.name || "N/A"
-            }
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        res.json({ success: true, qrCode: qrImage });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
     }
 };
+
+// Generate QR for all families
+const generateAllQR = async (req, res) => {
+    try {
+        const families = await Family.find();
+        for (let fam of families) {
+            const qrData = `https://mjmk.lk/scan/${fam._id}`;
+            const qrImage = await QRCode.toDataURL(qrData);
+            fam.qrCode = qrImage;
+            await fam.save();
+        }
+        res.json({ success: true, message: "All QR generated successfully" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// Scan QR (only return family ID and head)
+const scanQR = async (req, res) => {
+    try {
+        const family = await Family.findById(req.params.id).select("_id head");
+        if (!family) return res.status(404).json({ success: false, message: "Family not found" });
+
+        res.json({ success: true, data: family });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+module.exports = { generateQR, generateAllQR, scanQR };
