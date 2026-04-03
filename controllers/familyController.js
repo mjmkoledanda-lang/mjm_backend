@@ -58,7 +58,7 @@ exports.createFamily = async (req, res) => {
 
         const qrId = uuidv4();
 
-        const qrData = `https://mjmk.lk/qr/scan/${family.qrId}`;
+        const qrData = `https://mjmk.lk/qr/scan/${qrId}`;
 
         const qrImage = await QRCode.toDataURL(qrData);
 
