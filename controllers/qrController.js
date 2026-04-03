@@ -1,6 +1,8 @@
 const QRCode = require("qrcode");
 const Family = require("../models/Family");
 const KANJI_CONFIG = require("../config/kanjiConfig");
+const Kanji = require("../models/Kanji");
+const Qurban = require("../models/Qurban");
 // ===============================
 // 🔳 GENERATE QR FOR ONE FAMILY
 // ===============================
@@ -111,6 +113,8 @@ const scanQR = async (req, res) => {
 // ===============================
 // ✅ GET STATUS
 // ===============================
+
+
 const getStatus = async (req, res) => {
     try {
         const family = await Family.findOne({ qrId: req.params.id });
@@ -119,42 +123,34 @@ const getStatus = async (req, res) => {
             return res.status(404).json({ message: "Family not found" });
         }
 
-        const today = new Date();
-        const todayStr = today.toISOString().split("T")[0];
+        const todayStr = new Date().toISOString().split("T")[0];
+        const year = new Date().getFullYear();
 
-        const diffDays = Math.floor(
-            (today - KANJI_CONFIG.ramadanStart) / (1000 * 60 * 60 * 24)
-        );
-
-        const isRamadan =
-            diffDays >= 0 && diffDays < KANJI_CONFIG.durationDays;
-
-
-
-
-        // Kanji check
-        const alreadyTakenToday = family.kanjiRecords?.some(
-            r => r.date === todayStr
-        );
-
-        // Qurban check
-        const currentYear = new Date().getFullYear();
-        const qurbanTaken = family.qurbanYear === currentYear;
-
-        res.json({
-            canTakeKanji: isRamadan && !alreadyTakenToday,
-            alreadyTakenToday,
-            canTakeQurban: !qurbanTaken
+        const kanji = await Kanji.findOne({
+            familyId: family._id,
+            date: todayStr
         });
 
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+        const qurban = await Qurban.findOne({
+            familyId: family._id,
+            year
+        });
+
+        res.json({
+            canTakeKanji: !kanji,
+            alreadyTakenToday: !!kanji,
+            canTakeQurban: !qurban
+        });
+
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
 };
 
 // ===============================
 // ✅ MARK KANJI
 // ===============================
+
 const markKanji = async (req, res) => {
     try {
         const family = await Family.findOne({ qrId: req.params.id });
@@ -163,39 +159,27 @@ const markKanji = async (req, res) => {
             return res.status(404).json({ message: "Family not found" });
         }
 
-        const today = new Date();
-        const todayStr = today.toISOString().split("T")[0];
+        const todayStr = new Date().toISOString().split("T")[0];
 
-        // Ramadan check
-        const diffDays = Math.floor(
-            (today - KANJI_CONFIG.ramadanStart) / (1000 * 60 * 60 * 24)
-        );
+        // Ramadan check (keep your existing logic)
 
-        const isRamadan =
-            diffDays >= 0 && diffDays < KANJI_CONFIG.durationDays;
+        // Check already taken
+        const exist = await Kanji.findOne({
+            familyId: family._id,
+            date: todayStr
+        });
 
-        if (!isRamadan) {
-            return res.status(400).json({
-                message: "Kanji only allowed during Ramadan"
-            });
-        }
-
-        // Already taken today?
-        const alreadyTaken = family.kanjiRecords?.some(
-            r => r.date === todayStr
-        );
-
-        if (alreadyTaken) {
+        if (exist) {
             return res.status(400).json({
                 message: "Kanji already taken today"
             });
         }
 
-        // Save record
-        family.kanjiRecords = family.kanjiRecords || [];
-        family.kanjiRecords.push({ date: todayStr });
-
-        await family.save();
+        // Save
+        await Kanji.create({
+            familyId: family._id,
+            date: todayStr
+        });
 
         res.json({ message: "Kanji marked successfully" });
 
@@ -207,6 +191,8 @@ const markKanji = async (req, res) => {
 // ===============================
 // ✅ MARK QURBAN
 // ===============================
+
+
 const markQurban = async (req, res) => {
     try {
         const family = await Family.findOne({ qrId: req.params.id });
@@ -215,17 +201,23 @@ const markQurban = async (req, res) => {
             return res.status(404).json({ message: "Family not found" });
         }
 
-        const currentYear = new Date().getFullYear();
+        const year = new Date().getFullYear();
 
-        if (family.qurbanYear === currentYear) {
+        const exist = await Qurban.findOne({
+            familyId: family._id,
+            year
+        });
+
+        if (exist) {
             return res.status(400).json({
                 message: "Qurban already taken this year"
             });
         }
 
-        family.qurbanYear = currentYear;
-
-        await family.save();
+        await Qurban.create({
+            familyId: family._id,
+            year
+        });
 
         res.json({ message: "Qurban marked successfully" });
 
