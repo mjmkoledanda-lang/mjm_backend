@@ -19,7 +19,7 @@ async function run() {
             }
         }
 
-        console.log("🎉 All families updated with qrId");
+        console.log("🎉 DONE - qrId added");
         process.exit();
 
     } catch (err) {
