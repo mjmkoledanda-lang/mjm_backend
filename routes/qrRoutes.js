@@ -10,17 +10,25 @@ const {
     markQurban,
 } = require("../controllers/qrController");
 
-// QR
+// ======================
+// QR GENERATION
+// ======================
 router.get("/generate/:id", generateQR);
 router.get("/generate-all", generateAllQR);
 
-// Scan
+// ======================
+// QR SCAN (FIXED)
+// ======================
 router.get("/scan/:id", scanQR);
 
-// Status
+// ======================
+// STATUS
+// ======================
 router.get("/status/:id", getStatus);
 
-// Mark actions
+// ======================
+// ACTIONS
+// ======================
 router.put("/kanji/:id", markKanji);
 router.put("/qurban/:id", markQurban);
 
