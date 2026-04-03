@@ -129,6 +129,9 @@ const getStatus = async (req, res) => {
         const isRamadan =
             diffDays >= 0 && diffDays < KANJI_CONFIG.durationDays;
 
+
+
+
         // Kanji check
         const alreadyTakenToday = family.kanjiRecords?.some(
             r => r.date === todayStr
@@ -165,10 +168,11 @@ const markKanji = async (req, res) => {
 
         // Ramadan check
         const diffDays = Math.floor(
-            (today - RAMADAN_START) / (1000 * 60 * 60 * 24)
+            (today - KANJI_CONFIG.ramadanStart) / (1000 * 60 * 60 * 24)
         );
 
-        const isRamadan = diffDays >= 0 && diffDays < 30;
+        const isRamadan =
+            diffDays >= 0 && diffDays < KANJI_CONFIG.durationDays;
 
         if (!isRamadan) {
             return res.status(400).json({
