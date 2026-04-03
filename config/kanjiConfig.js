@@ -1,5 +1,5 @@
 const KANJI_CONFIG = {
-    ramadanStart: new Date("2026-04-02"),
+    ramadanStart: new Date("2026-02-02"),
     durationDays: 30
 };
 
