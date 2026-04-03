@@ -19,27 +19,27 @@ async function generateQRCodes() {
         const families = await Family.find({});
 
         for (let family of families) {
-            if (!family.qrCode) {
-                const qrData = `https://mjmk.lk/scan/${family._id}`;
-                const qrImage = await QRCode.toDataURL(qrData);
-
-                // ✅ Force update directly
-                await Family.updateOne(
-                    { _id: family._id },
-                    { $set: { qrCode: qrImage } }
-                );
-
-                console.log(`QR generated for family ${family.familyId}`);
-            } else {
-                console.log(`Family ${family.familyId} already has QR`);
+            if (!family.qrId) {
+                console.log(`Skipping ${family.familyId} (no qrId)`);
+                continue;
             }
+
+            const qrData = `https://mjmk.lk/qr/scan/${family.qrId}`;
+            const qrImage = await QRCode.toDataURL(qrData);
+
+            await Family.updateOne(
+                { _id: family._id },
+                { $set: { qrCode: qrImage } }
+            );
+
+            console.log(`✅ QR fixed for ${family.familyId}`);
         }
 
-        console.log("✅ All QR codes processed");
+        console.log("🎉 All QR codes regenerated correctly");
         process.exit(0);
 
     } catch (error) {
-        console.error("Error generating QR codes:", error);
+        console.error("Error:", error);
         process.exit(1);
     }
 }
