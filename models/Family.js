@@ -54,15 +54,13 @@ const familySchema = new mongoose.Schema({
         sparse: true // ✅ Add this!
     },
 
-    // ✅ IMPORTANT FIELDS
-    kanjiTaken: {
-        type: Boolean,
-        default: false,
-    },
-    qurbanTaken: {
-        type: Boolean,
-        default: false,
-    },
+    kanjiRecords: [
+        {
+            date: String
+        }
+    ],
+
+    qurbanYear: Number,
 
 
 

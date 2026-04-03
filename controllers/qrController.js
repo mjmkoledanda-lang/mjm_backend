@@ -1,6 +1,6 @@
 const QRCode = require("qrcode");
 const Family = require("../models/Family");
-
+const KANJI_CONFIG = require("../config/kanjiConfig");
 // ===============================
 // 🔳 GENERATE QR FOR ONE FAMILY
 // ===============================
@@ -119,9 +119,30 @@ const getStatus = async (req, res) => {
             return res.status(404).json({ message: "Family not found" });
         }
 
+        const today = new Date();
+        const todayStr = today.toISOString().split("T")[0];
+
+        // Ramadan check
+        const diffDays = Math.floor(
+            (today - KANJI_CONFIG.ramadanStart) / (1000 * 60 * 60 * 24)
+        );
+
+        const isRamadan =
+            diffDays >= 0 && diffDays < KANJI_CONFIG.durationDays;
+
+        // Kanji check
+        const alreadyTakenToday = family.kanjiRecords?.some(
+            r => r.date === todayStr
+        );
+
+        // Qurban check
+        const currentYear = new Date().getFullYear();
+        const qurbanTaken = family.qurbanYear === currentYear;
+
         res.json({
-            kanjiTaken: family.kanjiTaken || false,
-            qurbanTaken: family.qurbanTaken || false,
+            canTakeKanji: isRamadan && !alreadyTakenToday,
+            alreadyTakenToday,
+            canTakeQurban: !qurbanTaken
         });
 
     } catch (error) {
@@ -140,14 +161,40 @@ const markKanji = async (req, res) => {
             return res.status(404).json({ message: "Family not found" });
         }
 
-        if (family.kanjiTaken) {
-            return res.status(400).json({ message: "Kanji already taken" });
+        const today = new Date();
+        const todayStr = today.toISOString().split("T")[0];
+
+        // Ramadan check
+        const diffDays = Math.floor(
+            (today - RAMADAN_START) / (1000 * 60 * 60 * 24)
+        );
+
+        const isRamadan = diffDays >= 0 && diffDays < 30;
+
+        if (!isRamadan) {
+            return res.status(400).json({
+                message: "Kanji only allowed during Ramadan"
+            });
         }
 
-        family.kanjiTaken = true;
+        // Already taken today?
+        const alreadyTaken = family.kanjiRecords?.some(
+            r => r.date === todayStr
+        );
+
+        if (alreadyTaken) {
+            return res.status(400).json({
+                message: "Kanji already taken today"
+            });
+        }
+
+        // Save record
+        family.kanjiRecords = family.kanjiRecords || [];
+        family.kanjiRecords.push({ date: todayStr });
+
         await family.save();
 
-        res.json({ message: "Kanji marked as taken" });
+        res.json({ message: "Kanji marked successfully" });
 
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -165,14 +212,19 @@ const markQurban = async (req, res) => {
             return res.status(404).json({ message: "Family not found" });
         }
 
-        if (family.qurbanTaken) {
-            return res.status(400).json({ message: "Qurban already taken" });
+        const currentYear = new Date().getFullYear();
+
+        if (family.qurbanYear === currentYear) {
+            return res.status(400).json({
+                message: "Qurban already taken this year"
+            });
         }
 
-        family.qurbanTaken = true;
+        family.qurbanYear = currentYear;
+
         await family.save();
 
-        res.json({ message: "Qurban marked as taken" });
+        res.json({ message: "Qurban marked successfully" });
 
     } catch (err) {
         res.status(500).json({ message: err.message });
