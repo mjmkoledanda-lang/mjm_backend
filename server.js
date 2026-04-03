@@ -7,6 +7,8 @@ const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const path = require("path");
 const app = express();
+const dashboardRoutes = require("./routes/dashboardRoutes");
+
 
 app.get("/api/health", (req, res) => {
     res.status(200).json({
@@ -112,6 +114,8 @@ app.use("/api/qurban", require("./routes/qurbanRoutes"));
 
 app.use("/api/kanji", require("./routes/kanjiRoutes"));
 app.use("/api/qr", require("./routes/qrRoutes"));
+app.use("/api/dashboard", dashboardRoutes);
+
 
 // ===============================
 // 🧪 TEST ROUTE
