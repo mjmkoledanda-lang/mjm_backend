@@ -12,7 +12,7 @@ const generateQR = async (req, res) => {
             return res.status(404).json({ success: false, message: "Family not found" });
         }
 
-        const qrData = `https://mjmk.lk/qr/scan/${family.qrId}`;
+        const qrData = `https://mjmk.lk/qr/scan/${fam.qrId}`;
         const qrImage = await QRCode.toDataURL(qrData);
 
         family.qrCode = qrImage;
@@ -113,7 +113,7 @@ const scanQR = async (req, res) => {
 // ===============================
 const getStatus = async (req, res) => {
     try {
-        const family = await Family.findById(req.params.id);
+        const family = await Family.findOne({ qrId: req.params.id });
 
         if (!family) {
             return res.status(404).json({ message: "Family not found" });
@@ -122,7 +122,6 @@ const getStatus = async (req, res) => {
         const today = new Date();
         const todayStr = today.toISOString().split("T")[0];
 
-        // Ramadan check
         const diffDays = Math.floor(
             (today - KANJI_CONFIG.ramadanStart) / (1000 * 60 * 60 * 24)
         );
@@ -155,7 +154,7 @@ const getStatus = async (req, res) => {
 // ===============================
 const markKanji = async (req, res) => {
     try {
-        const family = await Family.findById(req.params.id);
+        const family = await Family.findOne({ qrId: req.params.id });
 
         if (!family) {
             return res.status(404).json({ message: "Family not found" });
@@ -206,7 +205,7 @@ const markKanji = async (req, res) => {
 // ===============================
 const markQurban = async (req, res) => {
     try {
-        const family = await Family.findById(req.params.id);
+        const family = await Family.findOne({ qrId: req.params.id });
 
         if (!family) {
             return res.status(404).json({ message: "Family not found" });
