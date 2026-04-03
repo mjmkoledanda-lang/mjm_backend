@@ -7,12 +7,12 @@ const kanjiSchema = new mongoose.Schema({
         required: true
     },
     date: {
-        type: String, // YYYY-MM-DD
+        type: String,
         required: true
     }
 }, { timestamps: true });
 
-// prevent duplicate per day
+// ✅ correct index
 kanjiSchema.index({ familyId: 1, date: 1 }, { unique: true });
 
 module.exports = mongoose.model("Kanji", kanjiSchema);
