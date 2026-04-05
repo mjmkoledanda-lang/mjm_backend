@@ -27,8 +27,7 @@ router.post(
 router.get("/", protect, getAllFamilies);
 
 // ✅ SEARCH
-router.get("/search/:keyword", protect, searchFamilies);
-
+router.get("/search/:keyword", searchFamilies);cd
 router.post("/filter", filterFamilies);
 const { getHeadStats } = require("../controllers/statsController");
 router.get("/stats/full", protect, getFullStats);
