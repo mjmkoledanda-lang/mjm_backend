@@ -6,6 +6,14 @@ const paymentSchema = new mongoose.Schema({
         ref: "Family",
         required: true
     },
+
+    // 🔥 NEW FIELD (CRITICAL)
+    collectedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    },
+
     year: {
         type: Number,
         required: true
@@ -19,10 +27,12 @@ const paymentSchema = new mongoose.Schema({
         default: 0
     },
     remarks: String,
+
     paidDate: {
         type: Date,
         default: Date.now
     },
+
     smsSent: {
         type: Boolean,
         default: false
@@ -36,7 +46,8 @@ const paymentSchema = new mongoose.Schema({
 // Prevent duplicate payments
 paymentSchema.index({ family: 1, year: 1, month: 1 }, { unique: true });
 
-// Speed up family queries
-paymentSchema.index({ family: 1 });
+// 🔥 PERFORMANCE INDEXES
+paymentSchema.index({ paidDate: 1 });
+paymentSchema.index({ collectedBy: 1 });
 
 module.exports = mongoose.model("Payment", paymentSchema);

@@ -17,7 +17,6 @@ exports.markPayment = async (req, res) => {
 
         let familyData;
 
-        // 🔥 NIC (public)
         if (nic) {
             const cleanNIC = nic.trim().toUpperCase();
 
@@ -26,7 +25,6 @@ exports.markPayment = async (req, res) => {
             });
         }
 
-        // 🔥 ObjectId (admin)
         if (!familyData && family) {
             familyData = await Family.findById(family);
         }
@@ -48,6 +46,10 @@ exports.markPayment = async (req, res) => {
         if (payment) {
             payment.paidDate = new Date();
             payment.amount = amountNum;
+
+            // 🔥 TRACK WHO UPDATED
+            payment.collectedBy = req.user._id;
+
             await payment.save();
         } else {
             payment = await Payment.create({
@@ -56,7 +58,10 @@ exports.markPayment = async (req, res) => {
                 month: monthNum,
                 amount: amountNum,
                 paidDate: new Date(),
-                receiptPrinted: false
+                receiptPrinted: false,
+
+                // 🔥 TRACK WHO CREATED
+                collectedBy: req.user._id
             });
         }
 

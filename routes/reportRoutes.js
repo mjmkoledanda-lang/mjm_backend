@@ -1,9 +1,15 @@
 const express = require("express");
 const router = express.Router();
 
-const { getMonthlyReport } = require("../controllers/reportController");
+const {
+    getMonthlyReport,
+    getDailyRolePaymentReport
+} = require("../controllers/reportController");
 
-// GET /api/reports/monthly/:year
+// Monthly report
 router.get("/monthly/:year", getMonthlyReport);
+
+// 🔥 NEW ROUTE
+router.get("/daily-role", getDailyRolePaymentReport);
 
 module.exports = router;

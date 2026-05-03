@@ -91,3 +91,77 @@ exports.getMonthlyReport = async (req, res) => {
 
     }
 };
+
+
+exports.getDailyRolePaymentReport = async (req, res) => {
+    try {
+        const { date } = req.query;
+
+        if (!date) {
+            return res.status(400).json({ message: "Date is required" });
+        }
+
+        const start = new Date(date);
+        start.setHours(0, 0, 0, 0);
+
+        const end = new Date(date);
+        end.setHours(23, 59, 59, 999);
+
+        const report = await Payment.aggregate([
+            {
+                $match: {
+                    paidDate: { $gte: start, $lte: end }
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "collectedBy",
+                    foreignField: "_id",
+                    as: "user"
+                }
+            },
+            { $unwind: "$user" },
+
+            {
+                $group: {
+                    _id: {
+                        role: "$user.role",
+                        userId: "$user._id",
+                        name: "$user.name"
+                    },
+                    total: { $sum: "$amount" }
+                }
+            },
+
+            {
+                $group: {
+                    _id: "$_id.role",
+                    users: {
+                        $push: {
+                            name: "$_id.name",
+                            total: "$total"
+                        }
+                    },
+                    roleTotal: { $sum: "$total" }
+                }
+            },
+
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        res.json({
+            success: true,
+            date,
+            data: report
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Error fetching report" });
+    }
+};
+
+

@@ -9,8 +9,11 @@ const {
     getPaymentSummary,
     sendPaymentSMS,
     togglePaymentStatus,
-    getTotalArrearsAllFamilies
+    getTotalArrearsAllFamilies,
 } = require("../controllers/paymentController");
+
+
+
 
 const { protect } = require("../middleware/authMiddleware");
 const { authorizeRoles } = require("../middleware/roleMiddleware");
@@ -103,6 +106,9 @@ router.delete(
     authorizeRoles("superadmin", "admin"),
     deletePayment
 );
+
+
+
 
 
 module.exports = router;
