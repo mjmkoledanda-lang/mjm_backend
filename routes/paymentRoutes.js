@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
 
+// ✅ IMPORT PAYMENT MODEL (CRITICAL FIX)
+const Payment = require("../models/Payment");
+
 const {
     markPayment,
     getPayments,
@@ -12,12 +15,8 @@ const {
     getTotalArrearsAllFamilies,
 } = require("../controllers/paymentController");
 
-
-
-
 const { protect } = require("../middleware/authMiddleware");
 const { authorizeRoles } = require("../middleware/roleMiddleware");
-
 
 // ==============================
 // TOTAL ARREARS OF ALL FAMILIES
@@ -29,7 +28,6 @@ router.get(
     getTotalArrearsAllFamilies
 );
 
-
 // ==============================
 // Payment Summary
 // ==============================
@@ -40,62 +38,83 @@ router.get(
     getPaymentSummary
 );
 
-router.get("/monthly-role", async (req, res) => {
-    try {
-        const { month, year } = req.query;
+// ==============================
+// ✅ MONTHLY ROLE REPORT (FIXED)
+// ==============================
+router.get(
+    "/monthly-role",
+    protect,
+    authorizeRoles("superadmin", "admin"),
+    async (req, res) => {
+        try {
+            const { month, year } = req.query;
 
-        const startDate = new Date(year, month - 1, 1);
-        const endDate = new Date(year, month, 0, 23, 59, 59);
+            // ✅ VALIDATION (IMPORTANT)
+            if (!month || !year) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Month and Year are required"
+                });
+            }
 
-        const data = await Payment.aggregate([
-            {
-                $match: {
-                    createdAt: {
-                        $gte: startDate,
-                        $lte: endDate
+            const startDate = new Date(year, month - 1, 1);
+            const endDate = new Date(year, month, 0, 23, 59, 59);
+
+            const data = await Payment.aggregate([
+                {
+                    $match: {
+                        createdAt: {
+                            $gte: startDate,
+                            $lte: endDate
+                        }
+                    }
+                },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "collector",
+                        foreignField: "_id",
+                        as: "collectorInfo"
+                    }
+                },
+                { $unwind: "$collectorInfo" },
+                {
+                    $group: {
+                        _id: {
+                            role: "$collectorInfo.role",
+                            user: "$collectorInfo.name"
+                        },
+                        total: { $sum: "$amount" }
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$_id.role",
+                        users: {
+                            $push: {
+                                name: "$_id.user",
+                                total: "$total"
+                            }
+                        },
+                        roleTotal: { $sum: "$total" }
                     }
                 }
-            },
-            {
-                $lookup: {
-                    from: "users",
-                    localField: "collector",
-                    foreignField: "_id",
-                    as: "collectorInfo"
-                }
-            },
-            { $unwind: "$collectorInfo" },
-            {
-                $group: {
-                    _id: {
-                        role: "$collectorInfo.role",
-                        user: "$collectorInfo.name"
-                    },
-                    total: { $sum: "$amount" }
-                }
-            },
-            {
-                $group: {
-                    _id: "$_id.role",
-                    users: {
-                        $push: {
-                            name: "$_id.user",
-                            total: "$total"
-                        }
-                    },
-                    roleTotal: { $sum: "$total" }
-                }
-            }
-        ]);
+            ]);
 
-        res.json({ success: true, data });
+            res.json({
+                success: true,
+                data
+            });
 
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Server error" });
+        } catch (err) {
+            console.error("Monthly Role Report Error:", err);
+            res.status(500).json({
+                success: false,
+                message: "Server error"
+            });
+        }
     }
-});
-
+);
 
 // ==============================
 // Create / Mark Payment
@@ -107,7 +126,6 @@ router.post(
     markPayment
 );
 
-
 // ==============================
 // Mark Receipt Printed + Send SMS
 // ==============================
@@ -117,7 +135,6 @@ router.put(
     authorizeRoles("superadmin", "admin"),
     markReceiptPrinted
 );
-
 
 // ==============================
 // Send SMS Manually
@@ -129,7 +146,6 @@ router.post(
     sendPaymentSMS
 );
 
-
 // ==============================
 // Toggle Payment Status
 // ==============================
@@ -140,10 +156,8 @@ router.patch(
     togglePaymentStatus
 );
 
-
 // ==============================
 // Get Payments By Family + Year
-// (dynamic route must be after fixed routes)
 // ==============================
 router.get(
     "/:familyId/:year",
@@ -151,7 +165,6 @@ router.get(
     authorizeRoles("superadmin", "admin"),
     getPayments
 );
-
 
 // ==============================
 // Delete Payment
@@ -162,9 +175,5 @@ router.delete(
     authorizeRoles("superadmin", "admin"),
     deletePayment
 );
-
-
-
-
 
 module.exports = router;
