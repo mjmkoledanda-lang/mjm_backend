@@ -41,80 +41,61 @@ router.get(
 // ==============================
 // ✅ MONTHLY ROLE REPORT (FIXED)
 // ==============================
-router.get(
-    "/monthly-role",
-    protect,
-    authorizeRoles("superadmin", "admin"),
-    async (req, res) => {
-        try {
-            const { month, year } = req.query;
+router.get("/monthly-role", async (req, res) => {
+    try {
+        const { month, year } = req.query;
 
-            // ✅ VALIDATION (IMPORTANT)
-            if (!month || !year) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Month and Year are required"
-                });
-            }
+        const startDate = new Date(year, month - 1, 1);
+        const endDate = new Date(year, month, 0, 23, 59, 59);
 
-            const startDate = new Date(year, month - 1, 1);
-            const endDate = new Date(year, month, 0, 23, 59, 59);
-
-            const data = await Payment.aggregate([
-                {
-                    $match: {
-                        createdAt: {
-                            $gte: startDate,
-                            $lte: endDate
-                        }
-                    }
-                },
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "collector",
-                        foreignField: "_id",
-                        as: "collectorInfo"
-                    }
-                },
-                { $unwind: "$collectorInfo" },
-                {
-                    $group: {
-                        _id: {
-                            role: "$collectorInfo.role",
-                            user: "$collectorInfo.name"
-                        },
-                        total: { $sum: "$amount" }
-                    }
-                },
-                {
-                    $group: {
-                        _id: "$_id.role",
-                        users: {
-                            $push: {
-                                name: "$_id.user",
-                                total: "$total"
-                            }
-                        },
-                        roleTotal: { $sum: "$total" }
+        const data = await Payment.aggregate([
+            {
+                $match: {
+                    paidDate: {   // ✅ FIXED
+                        $gte: startDate,
+                        $lte: endDate
                     }
                 }
-            ]);
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "collectedBy", // ✅ FIXED
+                    foreignField: "_id",
+                    as: "collectorInfo"
+                }
+            },
+            { $unwind: "$collectorInfo" },
+            {
+                $group: {
+                    _id: {
+                        role: "$collectorInfo.role",
+                        user: "$collectorInfo.name"
+                    },
+                    total: { $sum: "$amount" }
+                }
+            },
+            {
+                $group: {
+                    _id: "$_id.role",
+                    users: {
+                        $push: {
+                            name: "$_id.user",
+                            total: "$total"
+                        }
+                    },
+                    roleTotal: { $sum: "$total" }
+                }
+            }
+        ]);
 
-            res.json({
-                success: true,
-                data
-            });
+        res.json({ success: true, data });
 
-        } catch (err) {
-            console.error("Monthly Role Report Error:", err);
-            res.status(500).json({
-                success: false,
-                message: "Server error"
-            });
-        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Server error" });
     }
-);
+});
 
 // ==============================
 // Create / Mark Payment
