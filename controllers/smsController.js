@@ -29,10 +29,7 @@ exports.sendPaymentSMS = async (req, res) => {
             phone = "94" + phone.slice(1);
         }
 
-        const message = `Muhiyaddeen Jummah Mosque
-Koledanda, Weligama
-
-Payment Receipt
+        const message = `Monthly Payment Receipt
 
 Family ID: ${family.familyId}
 Head: ${family.headName}
