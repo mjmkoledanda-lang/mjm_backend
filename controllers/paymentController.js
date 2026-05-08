@@ -191,9 +191,7 @@ exports.markReceiptPrinted = async (req, res) => {
             const amount =
                 (months?.length || 1) * Number(family.monthlyAmount || 0);
 
-            const message = `Muhiyaddeen Jummah Masjid, Koledanda, Weligama.
-
-Payment Receipt
+            const message = `Payment Receipt
 
 Family ID: ${family.familyId}
 Name: ${family.headTitle ? family.headTitle + " " : ""}${family.headName}
@@ -202,8 +200,6 @@ Paid For: ${paidFor}
 
 Amount: Rs.${amount.toLocaleString()}
 Total Arrears: Rs.${totalArrears.toLocaleString()}
-
-Date: ${new Date().toLocaleDateString()}
 
 Jazakallah Khair.`;
 
