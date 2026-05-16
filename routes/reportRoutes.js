@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const Family = require("../models/Family");
+const Qurban = require("../models/Qurban");
 
 const Payment = require("../models/Payment"); // ✅ IMPORTANT
 
@@ -13,6 +15,36 @@ router.get("/monthly/:year", getMonthlyReport);
 
 // Daily report
 router.get("/daily-role", getDailyRolePaymentReport);
+
+
+
+
+router.get("/qurban-not-collected/:year", async (req, res) => {
+    try {
+        const year = parseInt(req.params.year);
+
+        // Get all qurban paid family IDs
+        const paidFamilies = await Qurban.find({ year }).distinct("family");
+
+        // Find families NOT in paid list
+        const families = await Family.find({
+            _id: { $nin: paidFamilies }
+        })
+            .select("familyId headName address");
+
+        res.json({
+            success: true,
+            data: families
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({
+            success: false,
+            message: "Server Error"
+        });
+    }
+});
 
 // ✅ ADD THIS NEW ROUTE
 router.get("/monthly-role", async (req, res) => {
