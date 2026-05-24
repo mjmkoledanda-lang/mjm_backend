@@ -24,7 +24,7 @@ router.get("/qurban-not-collected/:year", async (req, res) => {
         const year = parseInt(req.params.year);
 
         // Get all qurban paid family IDs
-        const paidFamilies = await Qurban.find({ year }).distinct("family");
+        const paidFamilies = await Qurban.find({ year }).distinct("familyId");
 
         // Find families NOT in paid list
         const families = await Family.find({
