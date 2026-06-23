@@ -13,6 +13,7 @@ const {
     sendPaymentSMS,
     togglePaymentStatus,
     getTotalArrearsAllFamilies,
+    sendAllArrearsSMS,
 } = require("../controllers/paymentController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -36,6 +37,46 @@ router.get(
     protect,
     authorizeRoles("superadmin", "admin"),
     getPaymentSummary
+);
+
+router.get(
+    "/collector-details",
+    protect,
+    authorizeRoles("superadmin", "admin"),
+    async (req, res) => {
+        try {
+            const { collectorId, month, year } = req.query;
+
+            const startDate = new Date(year, month - 1, 1);
+            const endDate = new Date(year, month, 0, 23, 59, 59);
+
+            const payments = await Payment.find({
+                collectedBy: collectorId,
+                paidDate: {
+                    $gte: startDate,
+                    $lte: endDate
+                }
+            })
+                .populate("family", "familyName")
+                .sort({ paidDate: 1 });
+
+            res.json({
+                success: true,
+                data: payments
+            });
+
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: "Server error" });
+        }
+    }
+);
+
+router.post(
+    "/send-all-arrears",
+    protect,
+    authorizeRoles("superadmin", "admin"),
+    sendAllArrearsSMS
 );
 
 // ==============================
