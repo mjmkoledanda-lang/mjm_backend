@@ -2,6 +2,7 @@ const Payment = require("../models/Payment");
 const Family = require("../models/Family");
 const sendSMS = require("../utils/sendSMS");
 
+
 // ================================
 // CREATE OR MARK PAYMENT
 // ================================
@@ -348,7 +349,13 @@ exports.sendPaymentSMS = async (req, res) => {
         const amount =
             (months?.length || 1) * Number(family.monthlyAmount || 0);
 
+<<<<<<< HEAD
+        const message = `
+
+Payment Receipt
+=======
         const message = `Payment Receipt
+>>>>>>> be6f2395e7dc4f37281f74e0766012bd51d05ca8
 
 Family ID: ${family.familyId}
 Name: ${family.headTitle ? family.headTitle + " " : ""}${family.headName}
@@ -493,3 +500,118 @@ exports.getTotalArrearsAllFamilies = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+<<<<<<< HEAD
+
+exports.sendAllArrearsSMS = async (req, res) => {
+    try {
+
+        const START_YEAR = 2020;
+        const START_MONTH = 1;
+
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1;
+
+        const totalMonths =
+            (currentYear - START_YEAR) * 12 +
+            (currentMonth - START_MONTH + 1);
+
+        const families = await Family.find();
+
+        let totalFamilies = 0;
+        let sent = 0;
+        let skipped = 0;
+        let failed = 0;
+
+        for (const family of families) {
+
+            totalFamilies++;
+
+            try {
+
+                const payments = await Payment.find({
+                    family: family._id
+                });
+
+                const expectedTotal =
+                    totalMonths *
+                    Number(family.monthlyAmount || 0);
+
+                const totalPaid = payments.reduce(
+                    (sum, p) => sum + Number(p.amount || 0),
+                    0
+                );
+
+                const arrearsAfter2020 = Math.max(
+                    expectedTotal - totalPaid,
+                    0
+                );
+
+                const manualArrears =
+                    Number(family.manualArrears || 0);
+
+                const totalArrears =
+                    arrearsAfter2020 + manualArrears;
+
+                if (totalArrears <= 0) {
+                    skipped++;
+                    continue;
+                }
+
+                if (!family.phone) {
+                    failed++;
+                    continue;
+                }
+
+                const phone =
+                    "94" + family.phone.replace(/^0/, "");
+
+                const message =
+                    `Muhiyaddeen Jummah Masjid, Koledanda
+
+Dear ${family.headName},
+
+Our records show an outstanding arrears amount of Rs.${totalArrears.toLocaleString()}.
+
+Kindly make the payment at your earliest convenience.
+
+If payment has already been made, please ignore this reminder.
+
+Jazakallah Khair.`;
+
+                await sendSMS(phone, message);
+
+                sent++;
+
+            } catch (err) {
+
+                console.error(
+                    "SMS Error:",
+                    family.familyId,
+                    err.message
+                );
+
+                failed++;
+            }
+        }
+
+        res.json({
+            success: true,
+            totalFamilies,
+            sent,
+            skipped,
+            failed
+        });
+
+    } catch (err) {
+
+        console.error(err);
+
+        res.status(500).json({
+            success: false,
+            message: err.message
+        });
+    }
+};
+=======
+>>>>>>> be6f2395e7dc4f37281f74e0766012bd51d05ca8
