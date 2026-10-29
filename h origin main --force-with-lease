@@ -1,0 +1,12 @@
+*   [33mf362f8b[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Merge backend changes and add Nasha ticket system
+[31m|[m[32m\[m  
+[31m|[m * [33mbe6f239[m[33m ([m[1;31morigin/main[m[33m)[m Update reportRoutes.js
+[31m|[m * [33md2a11fa[m Update reportRoutes.js
+[31m|[m * [33m835589e[m Update paymentController.js
+[31m|[m * [33mea8ee9f[m Update paymentController.js
+[31m|[m * [33mf3788d0[m Update smsController.js
+* [32m|[m [33mba63ea4[m sha
+* [32m|[m [33m7a21b19[m fixed reports routes
+* [32m|[m [33mc99f0b8[m qurban not collect
+[32m|[m[32m/[m  
+* [33mb0814cb[m fix monthly report query
