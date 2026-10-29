@@ -27,6 +27,7 @@ router.post(
 router.get("/", protect, getAllFamilies);
 
 // ✅ SEARCH
+router.get("/search", protect, (req, res) => res.json([]));
 router.get("/search/:keyword", protect, searchFamilies);
 
 router.post("/filter", protect, authorizeRoles("superadmin", "admin"), filterFamilies);

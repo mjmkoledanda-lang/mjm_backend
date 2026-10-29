@@ -163,19 +163,21 @@ exports.getFamilyById = async (req, res) => {
 exports.getAllFamilies = async (req, res) => {
     try {
         const families = await Family.find().sort({ familyId: 1 }).lean();
-        const members = await Member.find().select("family gender").lean();
+        const members = await Member.find().select("family gender name").lean();
 
         const memberMap = {};
         members.forEach(m => {
-            const famId = m.family.toString();
-            if (!memberMap[famId]) memberMap[famId] = { male: 0, female: 0 };
+            const famId = m.family?.toString();
+            if (!famId) return;
+            if (!memberMap[famId]) memberMap[famId] = { male: 0, female: 0, memberNames: [] };
             if (m.gender?.toUpperCase() === "MALE") memberMap[famId].male++;
             if (m.gender?.toUpperCase() === "FEMALE") memberMap[famId].female++;
+            if (m.name) memberMap[famId].memberNames.push(m.name);
         });
 
         const familiesWithStats = await Promise.all(
             families.map(async family => {
-                const stats = memberMap[family._id.toString()] || { male: 0, female: 0 };
+                const stats = memberMap[family._id.toString()] || { male: 0, female: 0, memberNames: [] };
                 let maleCount = stats.male;
                 let femaleCount = stats.female;
 
@@ -201,14 +203,14 @@ exports.getAllFamilies = async (req, res) => {
                         }
                     );
                     family.qrCode = qrImage;
-                    await Family.findByIdAndUpdate(family._id, { qrCode: qrImage });
                 }
 
                 return {
                     ...family,
                     totalMembers: maleCount + femaleCount,
                     maleCount,
-                    femaleCount
+                    femaleCount,
+                    memberNames: stats.memberNames || []
                 };
             })
         );
@@ -225,49 +227,110 @@ exports.getAllFamilies = async (req, res) => {
 // ============================
 exports.searchFamilies = async (req, res) => {
     try {
-        const keyword = req.params.keyword;
+        const keyword = (req.params.keyword || "").trim();
+        if (!keyword) {
+            return res.json([]);
+        }
 
-        // ✅ Search by Family ID
-        const familiesById = await Family.find({
-            familyId: { $regex: keyword, $options: "i" }
-        });
+        const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const regex = new RegExp(escapedKeyword, "i");
 
-        // ✅ Search by Head Name (better matching)
-        const familiesByHead = await Family.find({
-            headName: {
-                $regex: `\\b${keyword}`,
-                $options: "i"
+        // 1. Search Families by familyId, headName, nic, houseNumber, address, phone
+        const familiesDirect = await Family.find({
+            $or: [
+                { familyId: regex },
+                { headName: regex },
+                { nic: regex },
+                { houseNumber: regex },
+                { address: regex },
+                { phone: regex }
+            ]
+        }).lean();
+
+        // 2. Search Members by name, registerNumber, nic
+        const matchingMembers = await Member.find({
+            $or: [
+                { name: regex },
+                { registerNumber: regex },
+                { nic: regex }
+            ]
+        }).select("family name registerNumber").lean();
+
+        const memberByFamilyId = {};
+        const memberFamilyIds = [];
+        matchingMembers.forEach(m => {
+            if (m.family) {
+                const fId = m.family.toString();
+                if (!memberByFamilyId[fId]) {
+                    memberByFamilyId[fId] = [];
+                    memberFamilyIds.push(m.family);
+                }
+                const label = m.name || m.registerNumber;
+                if (label && !memberByFamilyId[fId].includes(label)) {
+                    memberByFamilyId[fId].push(label);
+                }
             }
         });
 
-        // ✅ Search by Member Register Number
-        const members = await Member.find({
-            registerNumber: { $regex: keyword, $options: "i" }
+        // 3. Find families of matching members that weren't found directly
+        const familiesFromMembers = memberFamilyIds.length > 0
+            ? await Family.find({ _id: { $in: memberFamilyIds } }).lean()
+            : [];
+
+        // 4. Merge all families into a map
+        const familyMap = new Map();
+
+        familiesDirect.forEach(f => {
+            const id = f._id.toString();
+            familyMap.set(id, {
+                ...f,
+                matchedMember: memberByFamilyId[id]?.join(", ") || ""
+            });
         });
 
-        const familyIdsFromMembers = members.map(m => m.family);
-
-        const familiesByRegister = await Family.find({
-            _id: { $in: familyIdsFromMembers }
+        familiesFromMembers.forEach(f => {
+            const id = f._id.toString();
+            if (familyMap.has(id)) {
+                const existing = familyMap.get(id);
+                if (!existing.matchedMember && memberByFamilyId[id]) {
+                    existing.matchedMember = memberByFamilyId[id].join(", ");
+                }
+            } else {
+                familyMap.set(id, {
+                    ...f,
+                    matchedMember: memberByFamilyId[id]?.join(", ") || ""
+                });
+            }
         });
 
-        // ✅ Merge all results
-        const allFamilies = [
-            ...familiesById,
-            ...familiesByHead,
-            ...familiesByRegister
-        ];
+        const allFamilies = Array.from(familyMap.values());
 
-        // ✅ Remove duplicates
-        const uniqueFamilies = Array.from(
-            new Map(
-                allFamilies.map(f => [f._id.toString(), f])
-            ).values()
-        );
+        // 5. Smart sort:
+        // Priority 1: Exact or startsWith match on familyId or headName
+        // Priority 2: Word boundary match on headName
+        // Priority 3: Substring match
+        // Tie-breaker: Natural sort on familyId
+        const upperQuery = keyword.toUpperCase();
 
-        res.json(uniqueFamilies);
+        allFamilies.sort((a, b) => {
+            const idA = String(a.familyId || "").toUpperCase();
+            const idB = String(b.familyId || "").toUpperCase();
+            const headA = String(a.headName || "").toUpperCase();
+            const headB = String(b.headName || "").toUpperCase();
+
+            const aStarts = idA.startsWith(upperQuery) || headA.startsWith(upperQuery);
+            const bStarts = idB.startsWith(upperQuery) || headB.startsWith(upperQuery);
+
+            if (aStarts && !bStarts) return -1;
+            if (!aStarts && bStarts) return 1;
+
+            return idA.localeCompare(idB, undefined, { numeric: true, sensitivity: "base" });
+        });
+
+        res.json(allFamilies);
 
     } catch (error) {
+        console.error("Search Families Error:", error);
         res.status(500).json({
             message: error.message
         });

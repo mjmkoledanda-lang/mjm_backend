@@ -45,11 +45,12 @@ exports.getMonthlyReport = async (req, res) => {
         const now = new Date();
         const familiesWithArrears = families.map(f => {
             const famPayments = paymentsByFamily[String(f._id)] || [];
-            const { totalArrears } = calculateFamilyArrears(f, famPayments, now);
+            const { totalArrears, unpaidMonths } = calculateFamilyArrears(f, famPayments, now);
 
             return {
                 ...f,
-                totalArrears
+                totalArrears,
+                unpaidMonths: unpaidMonths || 0
             };
         });
 
